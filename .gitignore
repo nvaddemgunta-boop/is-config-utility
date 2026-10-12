@@ -10,7 +10,7 @@ default-*.json
 # MTA
 mta_archives/
 *_mta_build_tmp
-*.mtar 
+*.mtar
 
 # Other
 .DS_Store
