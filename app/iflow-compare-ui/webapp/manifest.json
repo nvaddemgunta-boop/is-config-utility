@@ -1,0 +1,42 @@
+{
+  "_version": "1.59.0",
+  "sap.app": {
+    "id": "chs.iflowcompare",
+    "type": "application",
+    "title": "SAP BTP IS - Configuration Tool",
+    "description": "SAP BTP Integration Suite configuration comparison and utilities",
+    "applicationVersion": {
+      "version": "1.0.0"
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5"
+  },
+  "sap.ui5": {
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.layout": {},
+        "sap.ui.core": {}
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "rootView": {
+      "viewName": "chs.iflowcompare.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    }
+  }
+}

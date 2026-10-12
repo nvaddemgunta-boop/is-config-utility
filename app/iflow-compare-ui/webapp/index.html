@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>SAP BTP IS - Configuration Tool</title>
+
+    <style>
+      html,
+      body,
+      #content {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+
+    <script
+      id="sap-ui-bootstrap"
+      src="https://ui5.sap.com/resources/sap-ui-core.js"
+      data-sap-ui-theme="sap_horizon"
+      data-sap-ui-libs="sap.m,sap.ui.layout"
+      data-sap-ui-compatVersion="edge"
+      data-sap-ui-async="true"
+      data-sap-ui-onInit="module:sap/ui/core/ComponentSupport"
+      data-sap-ui-resourceroots='{
+        "chs.iflowcompare": "./"
+      }'>
+    </script>
+  </head>
+
+  <body class="sapUiBody sapUiSizeCompact" id="content">
+    <div
+      data-sap-ui-component
+      data-name="chs.iflowcompare"
+      data-id="container"
+      data-settings='{"id": "iflowCompare"}'
+      style="height: 100%">
+    </div>
+  </body>
+</html>

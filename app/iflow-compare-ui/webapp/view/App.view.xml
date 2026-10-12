@@ -1,0 +1,1077 @@
+<mvc:View
+  controllerName="chs.iflowcompare.controller.App"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  displayBlock="true">
+
+  <App>
+    <Page title="SAP BTP IS - Configuration Tool">
+      <content>
+
+      <VBox width="100%" class="sapUiResponsiveContentPadding">
+
+        <Panel
+          width="100%"
+          class="sapUiSmallMarginBottom">
+
+          <HBox
+            width="100%"
+            justifyContent="SpaceAround"
+            alignItems="Center"
+            wrap="Wrap">
+
+            <Panel
+              width="100%"
+              class="featureNavigationPanel sapUiSmallMarginBottom">
+
+              <HBox
+                width="100%"
+                justifyContent="SpaceBetween"
+                alignItems="Start"
+                class="featureNavigationRow">
+
+                <VBox width="14.285%" alignItems="Center" class="featureTile">
+                  <Button
+                    id="btnIflowConfig"
+                    icon="sap-icon://process"
+                    type="Transparent"
+                    tooltip="Integration Flow Configuration"
+                    press=".onFeatureButtonPress"
+                    class="featureCircleButton">
+                    <customData>
+                      <core:CustomData key="feature" value="IFLOW_CONFIG" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Text
+                    text="Integration Flow Configuration"
+                    wrapping="true"
+                    textAlign="Center"
+                    class="featureTileText" />
+                </VBox>
+
+                <VBox width="14.285%" alignItems="Center" class="featureTile">
+                  <Button
+                    id="btnValueMapping"
+                    icon="sap-icon://compare"
+                    type="Transparent"
+                    tooltip="Value Mapping Comparison"
+                    press=".onFeatureButtonPress"
+                    class="featureCircleButton">
+                    <customData>
+                      <core:CustomData key="feature" value="VALUE_MAPPING" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Text
+                    text="Value Mapping Comparison"
+                    wrapping="true"
+                    textAlign="Center"
+                    class="featureTileText" />
+                </VBox>
+
+                <VBox width="14.285%" alignItems="Center" class="featureTile">
+                  <Button
+                    id="btnDeploymentVersion"
+                    icon="sap-icon://history"
+                    type="Transparent"
+                    tooltip="Deployment Version Comparison"
+                    press=".onFeatureButtonPress"
+                    class="featureCircleButton">
+                    <customData>
+                      <core:CustomData key="feature" value="DEPLOYMENT_VERSION" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Text
+                    text="Deployment Version Comparison"
+                    wrapping="true"
+                    textAlign="Center"
+                    class="featureTileText" />
+                </VBox>
+
+                <VBox width="14.285%" alignItems="Center" class="featureTile">
+                  <Button
+                    id="btnConfigExport"
+                    icon="sap-icon://download"
+                    type="Transparent"
+                    tooltip="Configuration Export"
+                    press=".onFeatureButtonPress"
+                    class="featureCircleButton">
+                    <customData>
+                      <core:CustomData key="feature" value="CONFIG_EXPORT" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Text
+                    text="Configuration Export"
+                    wrapping="true"
+                    textAlign="Center"
+                    class="featureTileText" />
+                </VBox>
+
+                <VBox width="14.285%" alignItems="Center" class="featureTile">
+                  <Button
+                    id="btnTenantSearch"
+                    icon="sap-icon://search"
+                    type="Transparent"
+                    tooltip="Tenant Configuration Search"
+                    press=".onFeatureButtonPress"
+                    class="featureCircleButton">
+                    <customData>
+                      <core:CustomData key="feature" value="TENANT_SEARCH" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Text
+                    text="Tenant Configuration Search"
+                    wrapping="true"
+                    textAlign="Center"
+                    class="featureTileText" />
+                </VBox>
+
+                <VBox width="14.285%" alignItems="Center" class="featureTile">
+                  <Button
+                    id="btnYamlValidator"
+                    icon="sap-icon://accept"
+                    type="Transparent"
+                    tooltip="YAML Validator"
+                    press=".onFeatureButtonPress"
+                    class="featureCircleButton">
+                    <customData>
+                      <core:CustomData key="feature" value="YAML_VALIDATOR" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Text
+                    text="YAML Validator"
+                    wrapping="true"
+                    textAlign="Center"
+                    class="featureTileText" />
+                </VBox>
+
+                <VBox width="14.285%" alignItems="Center" class="featureTile">
+                  <Button
+                    id="btnPayloadTools"
+                    icon="sap-icon://document-text"
+                    type="Transparent"
+                    tooltip="Payload Tools"
+                    press=".onFeatureButtonPress"
+                    class="featureCircleButton">
+                    <customData>
+                      <core:CustomData key="feature" value="PAYLOAD_TOOLS" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Text
+                    text="Payload Tools"
+                    wrapping="true"
+                    textAlign="Center"
+                    class="featureTileText" />
+                </VBox>
+
+              </HBox>
+            </Panel>
+
+          </HBox>
+        </Panel>
+
+        <VBox visible="{= ${view>/activeFeature} === 'IFLOW_CONFIG' }">
+          <Panel
+            width="100%"
+            class="sapUiSmallMarginBottom">
+
+            <VBox class="sapUiSmallMargin">
+              <Title
+                text="Integration Flow Parameter Comparison"
+                level="H3" />
+
+              <Text
+                text="Select source and target environments, load integration packages, and compare externalized iFlow parameters across environments."
+                class="sapUiTinyMarginTop" />
+            </VBox>
+          </Panel>
+          <MessageStrip
+            text="Select source and target environments, choose iFlows from source, then click Compare."
+            type="Information"
+            showIcon="true"
+            class="sapUiSmallMarginBottom" />
+
+          <HBox width="100%" class="sapUiSmallMarginBottom">
+            <VBox width="100%" class="sapUiSmallMarginEnd">
+              <Label text="Source Environment" />
+              <Select
+                id="sourceEnvSelect"
+                width="100%"
+                forceSelection="false"
+                selectedKey="{view>/sourceEnvironment}"
+                items="{env>/environments}"
+                change=".onSourceEnvironmentChange">
+
+                <core:Item key="" text="Select source environment" />
+
+                <core:Item key="{env>id}" text="{env>name}" />
+              </Select>
+            </VBox>
+
+            <VBox width="100%">
+              <Label text="Target Environment" />
+              <Select
+                id="targetEnvSelect"
+                width="100%"
+                forceSelection="false"
+                selectedKey="{view>/targetEnvironment}"
+                items="{env>/environments}"
+                change=".onTargetEnvironmentChange">
+                
+                <core:Item key="" text="Select target environment" />
+
+                <core:Item key="{env>id}" text="{env>name}" />
+              </Select>
+            </VBox>
+          </HBox>
+
+          <HBox
+              width="100%"
+              height="420px"
+              renderType="Bare"
+              class="sapUiSmallMarginTop">
+
+              <Panel
+                headerText="Source Packages / iFlows"
+                width="100%">
+
+                <layoutData>
+                  <FlexItemData growFactor="1" shrinkFactor="1" baseSize="0" />
+                </layoutData>
+
+                <VBox width="100%">
+
+                  <SearchField
+                    width="100%"
+                    placeholder="Search source packages or iFlows"
+                    liveChange=".onSourceSearch"
+                    search=".onSourceSearch"
+                    class="sapUiSmallMarginBottom" />
+
+                  <ScrollContainer height="360px" width="100%" vertical="true">
+                    <Tree
+                      id="sourceTree"
+                      width="100%"
+                      toggleOpenState=".onSourceTreeToggle"
+                      items="{
+                        path: 'source>/packages',
+                        parameters: {
+                          arrayNames: ['iflows']
+                        }
+                      }">
+
+                      <CustomTreeItem>
+                        <HBox alignItems="Center" width="100%">
+                          <CheckBox
+                            visible="{= !${source>isPlaceholder} }"
+                            selected="{source>selected}"
+                            select=".onSourceCheckboxSelect" />
+
+                          <VBox class="sapUiTinyMarginBegin" width="100%">
+                            <Text
+                              text="{= ${source>isPlaceholder}
+                                ? ${source>artifactName}
+                                : (${source>packageName}
+                                  ? (${source>displayName} || ${source>packageName})
+                                  : ${source>artifactName}) }"
+                              wrapping="false" />
+
+                            <ObjectStatus
+                              visible="{= !${source>isPlaceholder} &amp;&amp; !!${source>version} }"
+                              text="{= 'Version: ' + ${source>version} }"
+                              state="Information" />
+                          </VBox>
+                        </HBox>
+                      </CustomTreeItem>
+
+                    </Tree>
+                  </ScrollContainer>
+
+                </VBox>
+
+              </Panel>
+
+              <Panel
+                headerText="Target Packages / iFlows"
+                width="100%"
+                class="sapUiSmallMarginBegin">
+
+                <layoutData>
+                  <FlexItemData growFactor="1" shrinkFactor="1" baseSize="0" />
+                </layoutData>
+
+                <VBox width="100%">
+
+                  <SearchField
+                    width="100%"
+                    placeholder="Search target packages or iFlows"
+                    liveChange=".onTargetSearch"
+                    search=".onTargetSearch"
+                    class="sapUiSmallMarginBottom" />
+
+                  <ScrollContainer height="360px" width="100%" vertical="true">
+                    <Tree
+                      id="targetTree"
+                      width="100%"
+                      toggleOpenState=".onTargetTreeToggle"
+                      items="{
+                        path: 'target>/packages',
+                        parameters: {
+                          arrayNames: ['iflows']
+                        }
+                      }">
+
+                      <CustomTreeItem>
+                        <HBox alignItems="Center" width="100%">
+                          <CheckBox
+                            visible="{= !${target>isPlaceholder} }"
+                            selected="{target>selected}"
+                            enabled="false" />
+
+                          <VBox class="sapUiTinyMarginBegin" width="100%">
+                            <Text
+                              text="{= ${target>isPlaceholder}
+                                ? ${target>artifactName}
+                                : (${target>packageName}
+                                  ? (${target>displayName} || ${target>packageName})
+                                  : ${target>artifactName}) }"
+                              wrapping="false" />
+
+                            <ObjectStatus
+                              visible="{= !${target>isPlaceholder} &amp;&amp; !!${target>version} }"
+                              text="{= 'Version: ' + ${target>version} }"
+                              state="Information" />
+                          </VBox>
+                        </HBox>
+                      </CustomTreeItem>
+
+                    </Tree>
+                  </ScrollContainer>
+
+                </VBox>
+
+              </Panel>
+
+              </HBox>
+
+          <Toolbar width="100%" class="sapUiSmallMarginTop">
+            <Text text="{view>/selectionText}" />
+            <ToolbarSpacer />
+            <Button
+              text="Compare Selected"
+              type="Emphasized"
+              press=".onComparePress" />
+          </Toolbar>
+
+          <Panel
+            headerText="Parameter Comparison Results"
+            class="sapUiSmallMarginTop">
+
+            <VBox width="100%" class="sapUiSmallMargin">
+
+              <!-- Summary counters and filters -->
+              <HBox
+                width="100%"
+                alignItems="Center"
+                justifyContent="SpaceBetween"
+                class="sapUiSmallMarginBottom">
+
+                <HBox alignItems="Center">
+
+                  <Title text="Results" level="H4" class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${parameterView>/summary/changed} + ' Changed' }"
+                    state="Warning"
+                    class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${parameterView>/summary/addedInTarget} + ' Added' }"
+                    state="Success"
+                    class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${parameterView>/summary/removedFromTarget} + ' Removed' }"
+                    state="Error"
+                    class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${parameterView>/summary/same} + ' Same' }"
+                    state="Information" />
+
+                </HBox>
+
+                <HBox alignItems="Center">
+
+                  <Button
+                    text="All"
+                    type="{= ${parameterView>/selectedFilter} === 'ALL' ? 'Emphasized' : 'Default' }"
+                    press=".onParameterFilterPress">
+                    <customData>
+                      <core:CustomData key="filter" value="ALL" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Changed"
+                    type="{= ${parameterView>/selectedFilter} === 'CHANGED' ? 'Emphasized' : 'Default' }"
+                    press=".onParameterFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData key="filter" value="CHANGED" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Added"
+                    type="{= ${parameterView>/selectedFilter} === 'ADDED_IN_TARGET' ? 'Emphasized' : 'Default' }"
+                    press=".onParameterFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData key="filter" value="ADDED_IN_TARGET" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Removed"
+                    type="{= ${parameterView>/selectedFilter} === 'REMOVED_FROM_TARGET' ? 'Emphasized' : 'Default' }"
+                    press=".onParameterFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData key="filter" value="REMOVED_FROM_TARGET" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Same"
+                    type="{= ${parameterView>/selectedFilter} === 'SAME' ? 'Emphasized' : 'Default' }"
+                    press=".onParameterFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData key="filter" value="SAME" writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                </HBox>
+              </HBox>
+
+              <!-- Search -->
+              <SearchField
+                width="100%"
+                placeholder="Search parameters, values, packages, or iFlows"
+                liveChange=".onParameterSearch"
+                search=".onParameterSearch"
+                class="sapUiSmallMarginBottom" />
+
+              <!-- Flat parameter comparison table -->
+              <List
+                width="100%"
+                showSeparators="None"
+                items="{parameterView>/groups}">
+
+                <CustomListItem>
+                  <Panel
+                    width="100%"
+                    expandable="true"
+                    expanded="false"
+                    headerText="{parameterView>artifactName}">
+
+                    <headerToolbar>
+                      <Toolbar>
+                        <Title
+                          text="{parameterView>artifactName}"
+                          level="H5" />
+
+                        <Text
+                          text="{parameterView>packageId}"
+                          class="sapUiTinyMarginBegin" />
+
+                        <ToolbarSpacer />
+
+                        <ObjectStatus
+                          text="{= ${parameterView>differenceCount} + ' difference(s)' }"
+                          state="{= ${parameterView>differenceCount} > 0 ? 'Warning' : 'Success' }" />
+                      </Toolbar>
+                    </headerToolbar>
+
+                    <Table
+                      width="100%"
+                      items="{parameterView>parameterRows}"
+                      growing="true"
+                      growingScrollToLoad="true">
+
+                      <columns>
+                        <Column width="25%">
+                          <Text text="Parameter" />
+                        </Column>
+
+                        <Column width="28%">
+                          <Text text="{= 'Source Value (' + ${parameterView>/sourceEnvironment} + ')' }" />
+                        </Column>
+
+                        <Column width="28%">
+                          <Text text="{= 'Target Value (' + ${parameterView>/targetEnvironment} + ')' }" />
+                        </Column>
+
+                        <Column width="15%" hAlign="Center">
+                          <Text text="Status" />
+                        </Column>
+                      </columns>
+
+                      <items>
+                        <ColumnListItem
+                          highlight="{
+                            path: 'parameterView>changeType',
+                            formatter: '.formatRowHighlight'
+                          }">
+
+                          <cells>
+                            <Text
+                              text="{parameterView>parameterKey}"
+                              wrapping="true" />
+
+                            <Text
+                              text="{parameterView>sourceValue}"
+                              wrapping="true" />
+
+                            <Text
+                              text="{parameterView>targetValue}"
+                              wrapping="true" />
+
+                            <ObjectStatus
+                              text="{
+                                path: 'parameterView>changeType',
+                                formatter: '.formatChangeText'
+                              }"
+                              state="{
+                                path: 'parameterView>changeType',
+                                formatter: '.formatChangeState'
+                              }" />
+                          </cells>
+
+                        </ColumnListItem>
+                      </items>
+
+                    </Table>
+                  </Panel>
+                </CustomListItem>
+
+              </List>
+            </VBox>
+          </Panel>
+        </VBox>
+
+        <VBox visible="{= ${view>/activeFeature} === 'VALUE_MAPPING' }">
+
+          <Panel
+            width="100%"
+            class="sapUiSmallMarginBottom">
+
+            <VBox class="sapUiSmallMargin">
+              <Title
+                text="Value Mapping Comparison"
+                level="H3" />
+
+              <Text
+                text="Select source and target environments, expand packages to load Value Mapping artifacts, then compare selected mappings."
+                class="sapUiTinyMarginTop" />
+            </VBox>
+          </Panel>
+
+          <MessageStrip
+            text="Select source and target environments. Expand a package to load Value Mapping artifacts, then select mappings from the source environment."
+            type="Information"
+            showIcon="true"
+            class="sapUiSmallMarginBottom" />
+
+          <!-- Environment selection -->
+          <HBox
+            width="100%"
+            class="sapUiSmallMarginBottom">
+
+            <VBox width="50%" class="sapUiSmallMarginEnd">
+              <Label text="Source Environment" />
+
+              <Select
+                id="vmSourceEnvSelect"
+                width="100%"
+                forceSelection="false"
+                selectedKey="{view>/vmSourceEnvironment}"
+                items="{env>/environments}"
+                change=".onVmSourceEnvironmentChange">
+                <core:Item key="{env>id}" text="{env>name}" />
+              </Select>
+            </VBox>
+
+            <VBox width="50%">
+              <Label text="Target Environment" />
+
+              <Select
+                id="vmTargetEnvSelect"
+                width="100%"
+                forceSelection="false"
+                selectedKey="{view>/vmTargetEnvironment}"
+                items="{env>/environments}"
+                change=".onVmTargetEnvironmentChange">
+                <core:Item key="{env>id}" text="{env>name}" />
+              </Select>
+            </VBox>
+          </HBox>
+
+          <!-- Source / target package trees -->
+          <HBox
+            width="100%"
+            height="420px"
+            renderType="Bare"
+            class="sapUiSmallMarginBottom">
+
+            <!-- Source Value Mapping panel -->
+            <Panel
+              headerText="Source Packages / Value Mappings"
+              width="100%">
+
+              <layoutData>
+                <FlexItemData
+                  growFactor="1"
+                  shrinkFactor="1"
+                  baseSize="0" />
+              </layoutData>
+
+              <VBox width="100%">
+
+                <SearchField
+                  width="100%"
+                  placeholder="Search source packages or value mappings"
+                  liveChange=".onVmSourceSearch"
+                  search=".onVmSourceSearch"
+                  class="sapUiSmallMarginBottom" />
+
+                <ScrollContainer
+                  width="100%"
+                  height="340px"
+                  vertical="true">
+
+                  <Tree
+                    id="vmSourceTree"
+                    width="100%"
+                    toggleOpenState=".onVmSourceTreeToggle"
+                    items="{
+                      path: 'vmSource>/packages',
+                      parameters: {
+                        arrayNames: ['valueMappings']
+                      }
+                    }">
+
+                    <CustomTreeItem>
+                      <HBox
+                        width="100%"
+                        alignItems="Center">
+
+                        <CheckBox
+                          visible="{= !${vmSource>isPlaceholder} }"
+                          selected="{vmSource>selected}"
+                          select=".onVmSourceCheckboxSelect" />
+
+                        <VBox
+                          width="100%"
+                          class="sapUiTinyMarginBegin">
+
+                          <Text
+                            text="{= ${vmSource>isPlaceholder}
+                              ? ${vmSource>artifactName}
+                              : (${vmSource>packageName}
+                                ? (${vmSource>displayName} || ${vmSource>packageName})
+                                : ${vmSource>artifactName}) }"
+                            wrapping="false" />
+
+                          <ObjectStatus
+                            visible="{= !${vmSource>isPlaceholder} &amp;&amp; !!${vmSource>version} }"
+                            text="{= 'Version: ' + ${vmSource>version} }"
+                            state="Information" />
+                        </VBox>
+
+                      </HBox>
+                    </CustomTreeItem>
+
+                  </Tree>
+                </ScrollContainer>
+              </VBox>
+            </Panel>
+
+            <!-- Target Value Mapping panel -->
+            <Panel
+              headerText="Target Packages / Value Mappings"
+              width="100%"
+              class="sapUiSmallMarginBegin">
+
+              <layoutData>
+                <FlexItemData
+                  growFactor="1"
+                  shrinkFactor="1"
+                  baseSize="0" />
+              </layoutData>
+
+              <VBox width="100%">
+
+                <SearchField
+                  width="100%"
+                  placeholder="Search target packages or value mappings"
+                  liveChange=".onVmTargetSearch"
+                  search=".onVmTargetSearch"
+                  class="sapUiSmallMarginBottom" />
+
+                <ScrollContainer
+                  width="100%"
+                  height="340px"
+                  vertical="true">
+
+                  <Tree
+                    id="vmTargetTree"
+                    width="100%"
+                    toggleOpenState=".onVmTargetTreeToggle"
+                    items="{
+                      path: 'vmTarget>/packages',
+                      parameters: {
+                        arrayNames: ['valueMappings']
+                      }
+                    }">
+
+                    <CustomTreeItem>
+                      <HBox
+                        width="100%"
+                        alignItems="Center">
+
+                        <CheckBox
+                          visible="{= !${vmTarget>isPlaceholder} }"
+                          selected="{vmTarget>selected}"
+                          enabled="false" />
+
+                        <VBox
+                          width="100%"
+                          class="sapUiTinyMarginBegin">
+
+                          <Text
+                            text="{= ${vmTarget>isPlaceholder}
+                              ? ${vmTarget>artifactName}
+                              : (${vmTarget>packageName}
+                                ? (${vmTarget>displayName} || ${vmTarget>packageName})
+                                : ${vmTarget>artifactName}) }"
+                            wrapping="false" />
+
+                          <ObjectStatus
+                            visible="{= !${vmTarget>isPlaceholder} &amp;&amp; !!${vmTarget>version} }"
+                            text="{= 'Version: ' + ${vmTarget>version} }"
+                            state="Information" />
+                        </VBox>
+
+                      </HBox>
+                    </CustomTreeItem>
+
+                  </Tree>
+                </ScrollContainer>
+              </VBox>
+            </Panel>
+
+          </HBox>
+
+          <Toolbar width="100%">
+            <Text text="{view>/vmSelectionText}" />
+            <ToolbarSpacer />
+
+            <Button
+              text="Compare Selected Value Mappings"
+              type="Emphasized"
+              press=".onVmComparePress" />
+          </Toolbar>
+
+          <Panel
+            headerText="Value Mapping Comparison Results"
+            class="sapUiSmallMarginTop">
+
+            <VBox
+              width="100%"
+              class="sapUiSmallMargin">
+
+              <!-- Summary and filters -->
+              <HBox
+                width="100%"
+                justifyContent="SpaceBetween"
+                alignItems="Center"
+                class="sapUiSmallMarginBottom">
+
+                <HBox alignItems="Center">
+
+                  <Title
+                    text="Results"
+                    level="H4"
+                    class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${vmComparison>/summary/changed} + ' Changed' }"
+                    state="Warning"
+                    class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${vmComparison>/summary/addedInTarget} + ' Added' }"
+                    state="Success"
+                    class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${vmComparison>/summary/removedFromTarget} + ' Removed' }"
+                    state="Error"
+                    class="sapUiSmallMarginEnd" />
+
+                  <ObjectStatus
+                    text="{= ${vmComparison>/summary/same} + ' Same' }"
+                    state="Information" />
+
+                </HBox>
+
+                <HBox alignItems="Center">
+
+                  <Button
+                    text="All"
+                    type="{= ${vmComparison>/selectedFilter} === 'ALL' ? 'Emphasized' : 'Default' }"
+                    press=".onVmResultFilterPress">
+                    <customData>
+                      <core:CustomData
+                        key="filter"
+                        value="ALL"
+                        writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Changed"
+                    type="{= ${vmComparison>/selectedFilter} === 'CHANGED' ? 'Emphasized' : 'Default' }"
+                    press=".onVmResultFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData
+                        key="filter"
+                        value="CHANGED"
+                        writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Added"
+                    type="{= ${vmComparison>/selectedFilter} === 'ADDED_IN_TARGET' ? 'Emphasized' : 'Default' }"
+                    press=".onVmResultFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData
+                        key="filter"
+                        value="ADDED_IN_TARGET"
+                        writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Removed"
+                    type="{= ${vmComparison>/selectedFilter} === 'REMOVED_FROM_TARGET' ? 'Emphasized' : 'Default' }"
+                    press=".onVmResultFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData
+                        key="filter"
+                        value="REMOVED_FROM_TARGET"
+                        writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                  <Button
+                    text="Same"
+                    type="{= ${vmComparison>/selectedFilter} === 'SAME' ? 'Emphasized' : 'Default' }"
+                    press=".onVmResultFilterPress"
+                    class="sapUiTinyMarginBegin">
+                    <customData>
+                      <core:CustomData
+                        key="filter"
+                        value="SAME"
+                        writeToDom="false" />
+                    </customData>
+                  </Button>
+
+                </HBox>
+              </HBox>
+
+              <SearchField
+                width="100%"
+                placeholder="Search mapping values, schemas, packages, or Value Mapping artifacts"
+                liveChange=".onVmResultSearch"
+                search=".onVmResultSearch"
+                class="sapUiSmallMarginBottom" />
+
+              <!-- Expandable Value Mapping artifact groups -->
+              <List
+                width="100%"
+                showSeparators="None"
+                items="{vmComparison>/groups}">
+
+                <CustomListItem>
+
+                  <Panel
+                    width="100%"
+                    expandable="true"
+                    expanded="false">
+
+                    <headerToolbar>
+                      <Toolbar>
+
+                        <VBox>
+                          <Title
+                            text="{vmComparison>artifactName}"
+                            level="H5" />
+
+                          <Text
+                            text="{
+                              parts: [
+                                { path: 'vmComparison>packageId' },
+                                { path: 'vmComparison>sourceVersion' },
+                                { path: 'vmComparison>targetVersion' }
+                              ],
+                              formatter: '.formatVmArtifactDetails'
+                            }"
+                            class="sapUiTinyMarginTop" />
+                        </VBox>
+
+                        <ToolbarSpacer />
+
+                        <ObjectStatus
+                          text="{= ${vmComparison>differenceCount} + ' difference(s)' }"
+                          state="{= ${vmComparison>differenceCount} > 0 ? 'Warning' : 'Success' }" />
+
+                      </Toolbar>
+                    </headerToolbar>
+
+                    <!-- Schema groups -->
+                    <List
+                      width="100%"
+                      showSeparators="Inner"
+                      items="{vmComparison>schemas}">
+
+                      <CustomListItem>
+
+                        <Panel
+                          width="100%"
+                          expandable="true"
+                          expanded="false">
+
+                          <headerToolbar>
+                            <Toolbar>
+
+                              <VBox>
+                                <Title
+                                  text="{vmComparison>displayName}"
+                                  level="H6" />
+
+                                <Text
+                                  text="{
+                                    parts: [
+                                      { path: 'vmComparison>srcAgency' },
+                                      { path: 'vmComparison>srcId' },
+                                      { path: 'vmComparison>tgtAgency' },
+                                      { path: 'vmComparison>tgtId' }
+                                    ],
+                                    formatter: '.formatVmSchemaDetails'
+                                  }"
+                                  class="sapUiTinyMarginTop" />
+                              </VBox>
+
+                              <ToolbarSpacer />
+
+                              <ObjectStatus
+                                text="{= ${vmComparison>differenceCount} + ' difference(s)' }"
+                                state="{= ${vmComparison>differenceCount} > 0 ? 'Warning' : 'Success' }" />
+
+                            </Toolbar>
+                          </headerToolbar>
+
+                          <Table
+                            width="100%"
+                            growing="true"
+                            growingScrollToLoad="true"
+                            items="{vmComparison>mappingRows}">
+
+                            <columns>
+                              <Column width="25%">
+                                <Text text="Source Value" />
+                              </Column>
+
+                              <Column width="25%">
+                                <Text
+                                  text="{= 'Mapped Value (' + ${vmComparison>/sourceEnvironment} + ')' }" />
+                              </Column>
+
+                              <Column width="25%">
+                                <Text
+                                  text="{= 'Mapped Value (' + ${vmComparison>/targetEnvironment} + ')' }" />
+                              </Column>
+
+                              <Column width="15%" hAlign="Center">
+                                <Text text="Status" />
+                              </Column>
+                            </columns>
+
+                            <items>
+                              <ColumnListItem
+                                highlight="{
+                                  path: 'vmComparison>changeType',
+                                  formatter: '.formatVmRowHighlight'
+                                }">
+
+                                <cells>
+                                  <Text
+                                    text="{vmComparison>sourceValue}"
+                                    wrapping="true" />
+
+                                  <Text
+                                    text="{vmComparison>sourceEnvironmentValue}"
+                                    wrapping="true" />
+
+                                  <Text
+                                    text="{vmComparison>targetEnvironmentValue}"
+                                    wrapping="true" />
+
+                                  <ObjectStatus
+                                    text="{
+                                      path: 'vmComparison>changeType',
+                                      formatter: '.formatVmChangeText'
+                                    }"
+                                    state="{
+                                      path: 'vmComparison>changeType',
+                                      formatter: '.formatVmChangeState'
+                                    }" />
+                                </cells>
+                              </ColumnListItem>
+                            </items>
+
+                          </Table>
+
+                        </Panel>
+                      </CustomListItem>
+                    </List>
+
+                  </Panel>
+                </CustomListItem>
+              </List>
+
+            </VBox>
+          </Panel>
+
+        </VBox>
+
+      </VBox>
+
+      </content>
+  </Page>
+  </App>
+</mvc:View>

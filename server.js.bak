@@ -1,0 +1,177 @@
+const cds = require("@sap/cds");
+const express = require("express");
+const { getDestination } = require("@sap-cloud-sdk/connectivity");
+const { validateEnvironment } = require("./srv/lib/environment-config");
+const { IntegrationSuiteClient } = require("./srv/lib/integration-suite-client");
+const { getEnvironments } = require("./srv/lib/environment-config");
+const { getMockCatalog } = require("./srv/lib/mock-catalog-service");
+const { compareMockArtifacts } = require("./srv/lib/mock-compare-service");
+const { compareArtifacts } = require("./srv/lib/compare-service");
+const { getCatalog } = require("./srv/lib/catalog-service");
+
+cds.on("bootstrap", (app) => {
+  app.get("/api/debug/destination", async (req, res) => {
+  try {
+    const environmentId = req.query.environment;
+
+    if (!environmentId) {
+      return res.status(400).json({
+        error: {
+          code: "MISSING_ENVIRONMENT",
+          message: "Query parameter 'environment' is required."
+        }
+      });
+    }
+
+    const environment = validateEnvironment(environmentId);
+
+    const destination = await getDestination({
+      destinationName: environment.destinationName
+    });
+
+    if (!destination) {
+      return res.status(404).json({
+        error: {
+          code: "DESTINATION_NOT_FOUND",
+          message: `Destination '${environment.destinationName}' was not found or could not be resolved.`
+        }
+      });
+    }
+
+    res.json({
+      environment: environment.id,
+      destinationName: environment.destinationName,
+      resolved: true,
+      url: destination.url,
+      authentication: destination.authentication,
+      proxyType: destination.proxyType
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+});
+
+  app.get("/api/debug/packages", async (req, res) => {
+    try {
+      const environment = req.query.environment || "DEV";
+
+      const client = new IntegrationSuiteClient(environment);
+      const packages = await client.getIntegrationPackages();
+
+      res.json({
+        environment,
+        count: packages.length,
+        sample: packages.slice(0, 5)
+      });
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/debug/artifacts", async (req, res) => {
+    try {
+      const environment = req.query.environment || "DEV";
+      const packageId = req.query.packageId;
+
+      if (!packageId) {
+        return res.status(400).json({
+          error: {
+            code: "MISSING_PACKAGE_ID",
+            message: "Query parameter 'packageId' is required."
+          }
+        });
+      }
+
+      const client = new IntegrationSuiteClient(environment);
+      const artifacts = await client.getDesignTimeArtifactsForPackage(packageId);
+
+      res.json({
+        environment,
+        packageId,
+        count: artifacts.length,
+        sample: artifacts.slice(0, 5)
+      });
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+  app.use(express.json());
+
+  app.get("/api/environments", (req, res) => {
+    try {
+      res.json(getEnvironments());
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/catalog", async (req, res) => {
+    try {
+      const environment = req.query.environment;
+      const useMock = shouldUseMock(req);
+
+      if (!environment) {
+        return res.status(400).json({
+          error: {
+            code: "MISSING_ENVIRONMENT",
+            message: "Query parameter 'environment' is required."
+          }
+        });
+      }
+
+      const catalog = useMock
+        ? getMockCatalog(environment)
+        : await getCatalog(environment);
+
+      res.json(catalog);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.post("/api/compare", async (req, res) => {
+    try {
+      const body = req.body;
+      const useMock = shouldUseMock(req);
+
+      const result = useMock
+        ? compareMockArtifacts(
+            body.sourceEnvironment,
+            body.targetEnvironment,
+            body.selectedArtifacts
+          )
+        : await compareArtifacts(
+            body.sourceEnvironment,
+            body.targetEnvironment,
+            body.selectedArtifacts
+          );
+
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+function shouldUseMock(req) {
+  /**
+   * You can force mock mode with:
+   * /api/catalog?environment=DEV&mock=true
+   *
+   * Or set environment variable:
+   * USE_MOCK_DATA=true
+   */
+  return req.query.mock === "true" || process.env.USE_MOCK_DATA === "true";
+}
+
+function handleError(res, error) {
+  const statusCode = error.statusCode || 500;
+
+  res.status(statusCode).json({
+    error: {
+      code: error.code || "INTERNAL_SERVER_ERROR",
+      message: error.message || "An unexpected error occurred."
+    }
+  });
+}
+
+module.exports = cds.server;
