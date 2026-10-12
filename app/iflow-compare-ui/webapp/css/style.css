@@ -1,0 +1,99 @@
+/* Use the full available page width; do not center/constrain this panel */
+.featureNavigationPanel {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 0.75rem 0 !important;
+  border: 1px solid #d5dce8;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+/* Remove panel padding behavior that can cause horizontal overflow */
+.featureNavigationPanel .sapMPanelContent {
+  width: 100%;
+  padding: 0.9rem 1.25rem;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* One clean row, with seven evenly aligned feature tiles */
+.featureNavigationRow {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Seven equal-width modules */
+.featureTile {
+  min-width: 0;
+  padding: 0.35rem 0.2rem;
+  box-sizing: border-box;
+}
+
+/* Circular icon action */
+.featureCircleButton {
+  width: 3rem !important;
+  min-width: 3rem !important;
+  height: 3rem !important;
+}
+
+.featureCircleButton .sapMBtnInner {
+  width: 3rem !important;
+  min-width: 3rem !important;
+  height: 3rem !important;
+  padding: 0 !important;
+  border: 1px solid #0a6ed1 !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+}
+
+.featureCircleButton .sapMBtnIcon {
+  color: #0a6ed1 !important;
+  font-size: 1.2rem !important;
+  line-height: 3rem !important;
+  margin: 0 !important;
+}
+
+/* Active module: blue-filled circular icon */
+.featureModuleCircleActive .sapMBtnInner {
+  background-color: #0a6ed1 !important;
+  border-color: #0a6ed1 !important;
+  box-shadow: 0 0 0 0.15rem rgba(10, 110, 209, 0.22);
+}
+
+.featureModuleCircleActive .sapMBtnIcon {
+  color: #ffffff !important;
+}
+
+.featureModuleCircle .sapMBtnInner {
+  width: 4.3rem !important;
+  min-width: 4.3rem !important;
+  height: 4.3rem !important;
+  padding: 0 !important;
+  border: 1px solid #6f88a6 !important;
+  border-radius: 50% !important;
+  background-color: #ffffff !important;
+}
+
+.featureModuleCircle .sapMBtnIcon {
+  color: #6f88a6 !important;
+  font-size: 1.6rem !important;
+  line-height: 4.15rem !important;
+  margin: 0 !important;
+}
+
+/* Labels can wrap neatly to two lines */
+.featureTileText {
+  min-height: 2.45rem;
+  margin-top: 0.4rem;
+  padding: 0 0.15rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.featureTileActive .featureTileText {
+  color: #0a6ed1;
+  font-weight: 700;
+}
