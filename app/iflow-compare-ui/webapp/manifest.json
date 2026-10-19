@@ -1,7 +1,7 @@
 {
   "_version": "1.59.0",
   "sap.app": {
-    "id": "chs.iflowcompare",
+    "id": "btpis.iflowcompare",
     "type": "application",
     "title": "SAP BTP IS - Configuration Tool",
     "description": "SAP BTP Integration Suite configuration comparison and utilities",
@@ -33,7 +33,7 @@
       "cozy": true
     },
     "rootView": {
-      "viewName": "chs.iflowcompare.view.App",
+      "viewName": "btpis.iflowcompare.view.App",
       "type": "XML",
       "id": "App",
       "async": true

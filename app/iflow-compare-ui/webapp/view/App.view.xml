@@ -1,5 +1,5 @@
 <mvc:View
-  controllerName="chs.iflowcompare.controller.App"
+  controllerName="btpis.iflowcompare.controller.App"
   xmlns:mvc="sap.ui.core.mvc"
   xmlns="sap.m"
   xmlns:core="sap.ui.core"
@@ -234,19 +234,22 @@
 
           <HBox
               width="100%"
-              height="420px"
+              height="70vh"
+              minHeight="440px"
               renderType="Bare"
               class="sapUiSmallMarginTop">
 
               <Panel
                 headerText="Source Packages / iFlows"
-                width="100%">
+                width="100%"
+                height="100%"
+                class="packageListPanel">
 
                 <layoutData>
                   <FlexItemData growFactor="1" shrinkFactor="1" baseSize="0" />
                 </layoutData>
 
-                <VBox width="100%">
+                <VBox width="100%" height="100%" class="packageListVBox">
 
                   <SearchField
                     width="100%"
@@ -255,44 +258,44 @@
                     search=".onSourceSearch"
                     class="sapUiSmallMarginBottom" />
 
-                  <ScrollContainer height="360px" width="100%" vertical="true">
-                    <Tree
-                      id="sourceTree"
-                      width="100%"
-                      toggleOpenState=".onSourceTreeToggle"
-                      items="{
-                        path: 'source>/packages',
-                        parameters: {
-                          arrayNames: ['iflows']
-                        }
-                      }">
+                  <Tree
+                    id="sourceTree"
+                    width="100%"
+                    height="100%"
+                    class="packageListTree"
+                    toggleOpenState=".onSourceTreeToggle"
+                    items="{
+                      path: 'source>/packages',
+                      parameters: {
+                        arrayNames: ['iflows']
+                      }
+                    }">
 
-                      <CustomTreeItem>
-                        <HBox alignItems="Center" width="100%">
-                          <CheckBox
-                            visible="{= !${source>isPlaceholder} }"
-                            selected="{source>selected}"
-                            select=".onSourceCheckboxSelect" />
+                    <CustomTreeItem>
+                      <HBox alignItems="Center" width="100%">
+                        <CheckBox
+                          visible="{= !${source>isPlaceholder} }"
+                          selected="{source>selected}"
+                          select=".onSourceCheckboxSelect" />
 
-                          <VBox class="sapUiTinyMarginBegin" width="100%">
-                            <Text
-                              text="{= ${source>isPlaceholder}
-                                ? ${source>artifactName}
-                                : (${source>packageName}
-                                  ? (${source>displayName} || ${source>packageName})
-                                  : ${source>artifactName}) }"
-                              wrapping="false" />
+                        <VBox class="sapUiTinyMarginBegin" width="100%">
+                          <Text
+                            text="{= ${source>isPlaceholder}
+                              ? ${source>artifactName}
+                              : (${source>packageName}
+                                ? (${source>displayName} || ${source>packageName})
+                                : ${source>artifactName}) }"
+                            wrapping="false" />
 
-                            <ObjectStatus
-                              visible="{= !${source>isPlaceholder} &amp;&amp; !!${source>version} }"
-                              text="{= 'Version: ' + ${source>version} }"
-                              state="Information" />
-                          </VBox>
-                        </HBox>
-                      </CustomTreeItem>
+                          <ObjectStatus
+                            visible="{= !${source>isPlaceholder} &amp;&amp; !!${source>version} }"
+                            text="{= 'Version: ' + ${source>version} }"
+                            state="Information" />
+                        </VBox>
+                      </HBox>
+                    </CustomTreeItem>
 
-                    </Tree>
-                  </ScrollContainer>
+                  </Tree>
 
                 </VBox>
 
@@ -301,13 +304,14 @@
               <Panel
                 headerText="Target Packages / iFlows"
                 width="100%"
-                class="sapUiSmallMarginBegin">
+                height="100%"
+                class="packageListPanel sapUiSmallMarginBegin">
 
                 <layoutData>
                   <FlexItemData growFactor="1" shrinkFactor="1" baseSize="0" />
                 </layoutData>
 
-                <VBox width="100%">
+                <VBox width="100%" height="100%" class="packageListVBox">
 
                   <SearchField
                     width="100%"
@@ -316,44 +320,44 @@
                     search=".onTargetSearch"
                     class="sapUiSmallMarginBottom" />
 
-                  <ScrollContainer height="360px" width="100%" vertical="true">
-                    <Tree
-                      id="targetTree"
-                      width="100%"
-                      toggleOpenState=".onTargetTreeToggle"
-                      items="{
-                        path: 'target>/packages',
-                        parameters: {
-                          arrayNames: ['iflows']
-                        }
-                      }">
+                  <Tree
+                    id="targetTree"
+                    width="100%"
+                    height="100%"
+                    class="packageListTree"
+                    toggleOpenState=".onTargetTreeToggle"
+                    items="{
+                      path: 'target>/packages',
+                      parameters: {
+                        arrayNames: ['iflows']
+                      }
+                    }">
 
-                      <CustomTreeItem>
-                        <HBox alignItems="Center" width="100%">
-                          <CheckBox
-                            visible="{= !${target>isPlaceholder} }"
-                            selected="{target>selected}"
-                            enabled="false" />
+                    <CustomTreeItem>
+                      <HBox alignItems="Center" width="100%">
+                        <CheckBox
+                          visible="{= !${target>isPlaceholder} }"
+                          selected="{target>selected}"
+                          enabled="false" />
 
-                          <VBox class="sapUiTinyMarginBegin" width="100%">
-                            <Text
-                              text="{= ${target>isPlaceholder}
-                                ? ${target>artifactName}
-                                : (${target>packageName}
-                                  ? (${target>displayName} || ${target>packageName})
-                                  : ${target>artifactName}) }"
-                              wrapping="false" />
+                        <VBox class="sapUiTinyMarginBegin" width="100%">
+                          <Text
+                            text="{= ${target>isPlaceholder}
+                              ? ${target>artifactName}
+                              : (${target>packageName}
+                                ? (${target>displayName} || ${target>packageName})
+                                : ${target>artifactName}) }"
+                            wrapping="false" />
 
-                            <ObjectStatus
-                              visible="{= !${target>isPlaceholder} &amp;&amp; !!${target>version} }"
-                              text="{= 'Version: ' + ${target>version} }"
-                              state="Information" />
-                          </VBox>
-                        </HBox>
-                      </CustomTreeItem>
+                          <ObjectStatus
+                            visible="{= !${target>isPlaceholder} &amp;&amp; !!${target>version} }"
+                            text="{= 'Version: ' + ${target>version} }"
+                            state="Information" />
+                        </VBox>
+                      </HBox>
+                    </CustomTreeItem>
 
-                    </Tree>
-                  </ScrollContainer>
+                  </Tree>
 
                 </VBox>
 
@@ -628,14 +632,17 @@
           <!-- Source / target package trees -->
           <HBox
             width="100%"
-            height="420px"
+            height="70vh"
+            minHeight="440px"
             renderType="Bare"
             class="sapUiSmallMarginBottom">
 
             <!-- Source Value Mapping panel -->
             <Panel
               headerText="Source Packages / Value Mappings"
-              width="100%">
+              width="100%"
+              height="100%"
+              class="packageListPanel">
 
               <layoutData>
                 <FlexItemData
@@ -644,7 +651,7 @@
                   baseSize="0" />
               </layoutData>
 
-              <VBox width="100%">
+              <VBox width="100%" height="100%" class="packageListVBox">
 
                 <SearchField
                   width="100%"
@@ -653,55 +660,51 @@
                   search=".onVmSourceSearch"
                   class="sapUiSmallMarginBottom" />
 
-                <ScrollContainer
+                <Tree
+                  id="vmSourceTree"
                   width="100%"
-                  height="340px"
-                  vertical="true">
+                  height="100%"
+                  class="packageListTree"
+                  toggleOpenState=".onVmSourceTreeToggle"
+                  items="{
+                    path: 'vmSource>/packages',
+                    parameters: {
+                      arrayNames: ['valueMappings']
+                    }
+                  }">
 
-                  <Tree
-                    id="vmSourceTree"
-                    width="100%"
-                    toggleOpenState=".onVmSourceTreeToggle"
-                    items="{
-                      path: 'vmSource>/packages',
-                      parameters: {
-                        arrayNames: ['valueMappings']
-                      }
-                    }">
+                  <CustomTreeItem>
+                    <HBox
+                      width="100%"
+                      alignItems="Center">
 
-                    <CustomTreeItem>
-                      <HBox
+                      <CheckBox
+                        visible="{= !${vmSource>isPlaceholder} }"
+                        selected="{vmSource>selected}"
+                        select=".onVmSourceCheckboxSelect" />
+
+                      <VBox
                         width="100%"
-                        alignItems="Center">
+                        class="sapUiTinyMarginBegin">
 
-                        <CheckBox
-                          visible="{= !${vmSource>isPlaceholder} }"
-                          selected="{vmSource>selected}"
-                          select=".onVmSourceCheckboxSelect" />
+                        <Text
+                          text="{= ${vmSource>isPlaceholder}
+                            ? ${vmSource>artifactName}
+                            : (${vmSource>packageName}
+                              ? (${vmSource>displayName} || ${vmSource>packageName})
+                              : ${vmSource>artifactName}) }"
+                          wrapping="false" />
 
-                        <VBox
-                          width="100%"
-                          class="sapUiTinyMarginBegin">
+                        <ObjectStatus
+                          visible="{= !${vmSource>isPlaceholder} &amp;&amp; !!${vmSource>version} }"
+                          text="{= 'Version: ' + ${vmSource>version} }"
+                          state="Information" />
+                      </VBox>
 
-                          <Text
-                            text="{= ${vmSource>isPlaceholder}
-                              ? ${vmSource>artifactName}
-                              : (${vmSource>packageName}
-                                ? (${vmSource>displayName} || ${vmSource>packageName})
-                                : ${vmSource>artifactName}) }"
-                            wrapping="false" />
+                    </HBox>
+                  </CustomTreeItem>
 
-                          <ObjectStatus
-                            visible="{= !${vmSource>isPlaceholder} &amp;&amp; !!${vmSource>version} }"
-                            text="{= 'Version: ' + ${vmSource>version} }"
-                            state="Information" />
-                        </VBox>
-
-                      </HBox>
-                    </CustomTreeItem>
-
-                  </Tree>
-                </ScrollContainer>
+                </Tree>
               </VBox>
             </Panel>
 
@@ -709,7 +712,8 @@
             <Panel
               headerText="Target Packages / Value Mappings"
               width="100%"
-              class="sapUiSmallMarginBegin">
+              height="100%"
+              class="packageListPanel sapUiSmallMarginBegin">
 
               <layoutData>
                 <FlexItemData
@@ -718,7 +722,7 @@
                   baseSize="0" />
               </layoutData>
 
-              <VBox width="100%">
+              <VBox width="100%" height="100%" class="packageListVBox">
 
                 <SearchField
                   width="100%"
@@ -727,55 +731,51 @@
                   search=".onVmTargetSearch"
                   class="sapUiSmallMarginBottom" />
 
-                <ScrollContainer
+                <Tree
+                  id="vmTargetTree"
                   width="100%"
-                  height="340px"
-                  vertical="true">
+                  height="100%"
+                  class="packageListTree"
+                  toggleOpenState=".onVmTargetTreeToggle"
+                  items="{
+                    path: 'vmTarget>/packages',
+                    parameters: {
+                      arrayNames: ['valueMappings']
+                    }
+                  }">
 
-                  <Tree
-                    id="vmTargetTree"
-                    width="100%"
-                    toggleOpenState=".onVmTargetTreeToggle"
-                    items="{
-                      path: 'vmTarget>/packages',
-                      parameters: {
-                        arrayNames: ['valueMappings']
-                      }
-                    }">
+                  <CustomTreeItem>
+                    <HBox
+                      width="100%"
+                      alignItems="Center">
 
-                    <CustomTreeItem>
-                      <HBox
+                      <CheckBox
+                        visible="{= !${vmTarget>isPlaceholder} }"
+                        selected="{vmTarget>selected}"
+                        enabled="false" />
+
+                      <VBox
                         width="100%"
-                        alignItems="Center">
+                        class="sapUiTinyMarginBegin">
 
-                        <CheckBox
-                          visible="{= !${vmTarget>isPlaceholder} }"
-                          selected="{vmTarget>selected}"
-                          enabled="false" />
+                        <Text
+                          text="{= ${vmTarget>isPlaceholder}
+                            ? ${vmTarget>artifactName}
+                            : (${vmTarget>packageName}
+                              ? (${vmTarget>displayName} || ${vmTarget>packageName})
+                              : ${vmTarget>artifactName}) }"
+                          wrapping="false" />
 
-                        <VBox
-                          width="100%"
-                          class="sapUiTinyMarginBegin">
+                        <ObjectStatus
+                          visible="{= !${vmTarget>isPlaceholder} &amp;&amp; !!${vmTarget>version} }"
+                          text="{= 'Version: ' + ${vmTarget>version} }"
+                          state="Information" />
+                      </VBox>
 
-                          <Text
-                            text="{= ${vmTarget>isPlaceholder}
-                              ? ${vmTarget>artifactName}
-                              : (${vmTarget>packageName}
-                                ? (${vmTarget>displayName} || ${vmTarget>packageName})
-                                : ${vmTarget>artifactName}) }"
-                            wrapping="false" />
+                    </HBox>
+                  </CustomTreeItem>
 
-                          <ObjectStatus
-                            visible="{= !${vmTarget>isPlaceholder} &amp;&amp; !!${vmTarget>version} }"
-                            text="{= 'Version: ' + ${vmTarget>version} }"
-                            state="Information" />
-                        </VBox>
-
-                      </HBox>
-                    </CustomTreeItem>
-
-                  </Tree>
-                </ScrollContainer>
+                </Tree>
               </VBox>
             </Panel>
 
@@ -914,104 +914,100 @@
               <List
                 width="100%"
                 showSeparators="None"
+                class="vmResultList"
                 items="{vmComparison>/groups}">
 
                 <CustomListItem>
 
                   <Panel
                     width="100%"
+                    class="vmArtifactPanel"
                     expandable="true"
-                    expanded="false">
+                    expanded="false"
+                    headerText="{vmComparison>artifactName}">
 
-                    <headerToolbar>
-                      <Toolbar>
+                    <HBox
+                      width="100%"
+                      justifyContent="SpaceBetween"
+                      alignItems="Start"
+                      wrap="Wrap"
+                      class="vmResultMetaRow sapUiSmallMarginBottom">
 
-                        <VBox>
-                          <Title
-                            text="{vmComparison>artifactName}"
-                            level="H5" />
+                      <Text
+                        text="{
+                          parts: [
+                            { path: 'vmComparison>packageId' },
+                            { path: 'vmComparison>sourceVersion' },
+                            { path: 'vmComparison>targetVersion' }
+                          ],
+                          formatter: '.formatVmArtifactDetails'
+                        }"
+                        class="vmResultMetaText"
+                        wrapping="true" />
 
-                          <Text
-                            text="{
-                              parts: [
-                                { path: 'vmComparison>packageId' },
-                                { path: 'vmComparison>sourceVersion' },
-                                { path: 'vmComparison>targetVersion' }
-                              ],
-                              formatter: '.formatVmArtifactDetails'
-                            }"
-                            class="sapUiTinyMarginTop" />
-                        </VBox>
-
-                        <ToolbarSpacer />
-
-                        <ObjectStatus
-                          text="{= ${vmComparison>differenceCount} + ' difference(s)' }"
-                          state="{= ${vmComparison>differenceCount} > 0 ? 'Warning' : 'Success' }" />
-
-                      </Toolbar>
-                    </headerToolbar>
+                      <ObjectStatus
+                        text="{= ${vmComparison>differenceCount} + ' difference(s)' }"
+                        state="{= ${vmComparison>differenceCount} > 0 ? 'Warning' : 'Success' }"
+                        class="vmResultMetaStatus" />
+                    </HBox>
 
                     <!-- Schema groups -->
                     <List
                       width="100%"
                       showSeparators="Inner"
+                      class="vmSchemaList"
                       items="{vmComparison>schemas}">
 
                       <CustomListItem>
 
                         <Panel
                           width="100%"
+                          class="vmSchemaPanel"
                           expandable="true"
-                          expanded="false">
+                          expanded="true"
+                          headerText="{vmComparison>displayName}">
 
-                          <headerToolbar>
-                            <Toolbar>
+                          <HBox
+                            width="100%"
+                            justifyContent="SpaceBetween"
+                            alignItems="Start"
+                            wrap="Wrap"
+                            class="vmResultMetaRow sapUiSmallMarginBottom">
 
-                              <VBox>
-                                <Title
-                                  text="{vmComparison>displayName}"
-                                  level="H6" />
+                            <Text
+                              text="{vmComparison>detailsText}"
+                              class="vmResultMetaText"
+                              wrapping="true" />
 
-                                <Text
-                                  text="{
-                                    parts: [
-                                      { path: 'vmComparison>srcAgency' },
-                                      { path: 'vmComparison>srcId' },
-                                      { path: 'vmComparison>tgtAgency' },
-                                      { path: 'vmComparison>tgtId' }
-                                    ],
-                                    formatter: '.formatVmSchemaDetails'
-                                  }"
-                                  class="sapUiTinyMarginTop" />
-                              </VBox>
-
-                              <ToolbarSpacer />
-
-                              <ObjectStatus
-                                text="{= ${vmComparison>differenceCount} + ' difference(s)' }"
-                                state="{= ${vmComparison>differenceCount} > 0 ? 'Warning' : 'Success' }" />
-
-                            </Toolbar>
-                          </headerToolbar>
+                            <ObjectStatus
+                              text="{= ${vmComparison>differenceCount} + ' difference(s)' }"
+                              state="{= ${vmComparison>differenceCount} > 0 ? 'Warning' : 'Success' }"
+                              class="vmResultMetaStatus" />
+                          </HBox>
 
                           <Table
                             width="100%"
                             growing="true"
                             growingScrollToLoad="true"
+                            showNoData="true"
+                            noDataText="No mapping rows found for this schema pair."
                             items="{vmComparison>mappingRows}">
 
                             <columns>
-                              <Column width="25%">
+                              <Column width="24%">
+                                <Text text="Direction" />
+                              </Column>
+
+                              <Column width="21%">
                                 <Text text="Source Value" />
                               </Column>
 
-                              <Column width="25%">
+                              <Column width="20%">
                                 <Text
                                   text="{= 'Mapped Value (' + ${vmComparison>/sourceEnvironment} + ')' }" />
                               </Column>
 
-                              <Column width="25%">
+                              <Column width="20%">
                                 <Text
                                   text="{= 'Mapped Value (' + ${vmComparison>/targetEnvironment} + ')' }" />
                               </Column>
@@ -1029,6 +1025,10 @@
                                 }">
 
                                 <cells>
+                                  <Text
+                                    text="{vmComparison>directionLabel}"
+                                    wrapping="true" />
+
                                   <Text
                                     text="{vmComparison>sourceValue}"
                                     wrapping="true" />

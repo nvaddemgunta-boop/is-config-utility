@@ -1,4 +1,4 @@
-namespace chs.integrate360;
+namespace btpis.integrate360;
 
 service IFlowCompareService @(path: '/odata/v4/iflow') {
 

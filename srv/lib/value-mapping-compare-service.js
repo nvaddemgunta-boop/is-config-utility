@@ -244,66 +244,80 @@ async function compareSingleValueMapping(
 }
 
 function compareMappingEntries(sourceEntries, targetEntries) {
-  const sourceMap = buildEntryMap(sourceEntries);
-  const targetMap = buildEntryMap(targetEntries);
+  const sourceBuckets = buildEntryBuckets(sourceEntries);
+  const targetBuckets = buildEntryBuckets(targetEntries);
 
   const allSourceValues = new Set([
-    ...sourceMap.keys(),
-    ...targetMap.keys()
+    ...sourceBuckets.keys(),
+    ...targetBuckets.keys()
   ]);
 
-  return [...allSourceValues]
+  const rows = [];
+
+  [...allSourceValues]
     .sort(function (left, right) {
       return left.localeCompare(right);
     })
-    .map(function (sourceValue) {
-      const sourceEntry = sourceMap.get(sourceValue);
-      const targetEntry = targetMap.get(sourceValue);
+    .forEach(function (sourceValue) {
+      const sourceBucket = sourceBuckets.get(sourceValue) || [];
+      const targetBucket = targetBuckets.get(sourceValue) || [];
+      const rowCount = Math.max(sourceBucket.length, targetBucket.length);
 
-      if (!sourceEntry) {
-        return {
+      for (let index = 0; index < rowCount; index += 1) {
+        const sourceEntry = sourceBucket[index];
+        const targetEntry = targetBucket[index];
+
+        if (!sourceEntry) {
+          rows.push({
+            sourceValue,
+            sourceEnvironmentValue: "",
+            targetEnvironmentValue: getTargetValue(targetEntry),
+            changeType: "ADDED_IN_TARGET"
+          });
+
+          continue;
+        }
+
+        if (!targetEntry) {
+          rows.push({
+            sourceValue,
+            sourceEnvironmentValue: getTargetValue(sourceEntry),
+            targetEnvironmentValue: "",
+            changeType: "REMOVED_FROM_TARGET"
+          });
+
+          continue;
+        }
+
+        const sourceTargetValue = getTargetValue(sourceEntry);
+        const targetTargetValue = getTargetValue(targetEntry);
+
+        rows.push({
           sourceValue,
-          sourceEnvironmentValue: "",
-          targetEnvironmentValue: getTargetValue(targetEntry),
-          changeType: "ADDED_IN_TARGET"
-        };
+          sourceEnvironmentValue: sourceTargetValue,
+          targetEnvironmentValue: targetTargetValue,
+          changeType:
+            sourceTargetValue === targetTargetValue
+              ? "SAME"
+              : "CHANGED"
+        });
       }
-
-      if (!targetEntry) {
-        return {
-          sourceValue,
-          sourceEnvironmentValue: getTargetValue(sourceEntry),
-          targetEnvironmentValue: "",
-          changeType: "REMOVED_FROM_TARGET"
-        };
-      }
-
-      const sourceTargetValue = getTargetValue(sourceEntry);
-      const targetTargetValue = getTargetValue(targetEntry);
-
-      return {
-        sourceValue,
-        sourceEnvironmentValue: sourceTargetValue,
-        targetEnvironmentValue: targetTargetValue,
-        changeType:
-          sourceTargetValue === targetTargetValue
-            ? "SAME"
-            : "CHANGED"
-      };
     });
+
+  return rows;
 }
 
-function buildEntryMap(entries) {
+function buildEntryBuckets(entries) {
   const result = new Map();
 
   (entries || []).forEach(function (entry) {
     const sourceValue = getSourceValue(entry);
 
-    if (sourceValue === "") {
-      return;
+    if (!result.has(sourceValue)) {
+      result.set(sourceValue, []);
     }
 
-    result.set(sourceValue, entry);
+    result.get(sourceValue).push(entry);
   });
 
   return result;
@@ -311,20 +325,30 @@ function buildEntryMap(entries) {
 
 function getSourceValue(entry) {
   return String(
+    entry?.Value?.SrcValue ??
+    entry?.value?.SrcValue ??
+    entry?.value?.srcValue ??
+    entry?.Id ??
+    entry?.ID ??
     entry?.SrcValue ??
     entry?.SourceValue ??
     entry?.srcValue ??
     ""
-  ).trim();
+  );
 }
 
 function getTargetValue(entry) {
   return String(
+    entry?.Value?.TgtValue ??
+    entry?.value?.TgtValue ??
+    entry?.value?.tgtValue ??
+    entry?.Value ??
+    entry?.value ??
     entry?.TgtValue ??
     entry?.TargetValue ??
     entry?.tgtValue ??
     ""
-  ).trim();
+  );
 }
 
 function buildSchemaMap(schemas) {
@@ -338,12 +362,12 @@ function buildSchemaMap(schemas) {
 }
 
 function getSchemaKey(schema) {
-  return [
+  return JSON.stringify([
     schema?.SrcAgency || "",
     schema?.SrcId || "",
     schema?.TgtAgency || "",
     schema?.TgtId || ""
-  ].join("::");
+  ]);
 }
 
 function normalizeSchema(schema) {
@@ -501,5 +525,9 @@ function buildComparisonResponse(
 }
 
 module.exports = {
-  compareValueMappings
+  compareValueMappings,
+  compareMappingEntries,
+  buildEntryBuckets,
+  getSchemaKey,
+  normalizeSchema
 };
