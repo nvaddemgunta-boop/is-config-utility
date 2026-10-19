@@ -3,7 +3,7 @@ sap.ui.define([
 ], function (UIComponent) {
   "use strict";
 
-  return UIComponent.extend("chs.iflowcompare.Component", {
+  return UIComponent.extend("btpis.iflowcompare.Component", {
     metadata: {
       manifest: "json"
     }

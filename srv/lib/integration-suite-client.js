@@ -14,8 +14,7 @@ class IntegrationSuiteClient {
   }
 
   async getIntegrationPackages() {
-    const response = await this._get("/IntegrationPackages");
-    return extractODataResults(response.data);
+    return this._getAllPages("/IntegrationPackages");
   }
 
   async getDesignTimeArtifactsForPackage(packageId) {
@@ -29,8 +28,7 @@ class IntegrationSuiteClient {
     const packageKey = encodeURIComponent(escapeODataString(packageId));
     const url = `/IntegrationPackages('${packageKey}')/IntegrationDesigntimeArtifacts`;
 
-    const response = await this._get(url);
-    return extractODataResults(response.data);
+    return this._getAllPages(url);
   }
 
   async getDesignTimeArtifact(packageId, artifactId) {
@@ -76,22 +74,18 @@ class IntegrationSuiteClient {
       `Id='${escapeODataString(artifactId)}',` +
       `Version='${escapeODataString(normalizedVersion)}'`;
 
-    const response = await this._get(
+    return this._getAllPages(
       `/IntegrationDesigntimeArtifacts(${artifactKey})/Configurations`,
       {
         "$format": "json"
       }
     );
-
-    return extractODataResults(response.data);
   }
 
   async getValueMappingArtifacts() {
-    const response = await this._get("/ValueMappingDesigntimeArtifacts", {
+    return this._getAllPages("/ValueMappingDesigntimeArtifacts", {
       "$format": "json"
     });
-
-    return extractODataResults(response.data);
   }
 
   async getValueMappingSchemas(artifactId, version) {
@@ -99,14 +93,12 @@ class IntegrationSuiteClient {
       `Id='${escapeODataString(artifactId)}',` +
       `Version='${escapeODataString(version || "active")}'`;
 
-    const response = await this._get(
+    return this._getAllPages(
       `/ValueMappingDesigntimeArtifacts(${artifactKey})/ValMapSchema`,
       {
         "$format": "json"
       }
     );
-
-    return extractODataResults(response.data);
   }
 
   async getValueMappingEntries(artifactId, version, schema) {
@@ -120,15 +112,13 @@ class IntegrationSuiteClient {
       `TgtAgency='${escapeODataString(schema.TgtAgency)}',` +
       `TgtId='${escapeODataString(schema.TgtId)}'`;
 
-    const response = await this._get(
+    return this._getAllPages(
       `/ValueMappingDesigntimeArtifacts(${artifactKey})/` +
       `ValMapSchema(${schemaKey})/ValMaps`,
       {
         "$format": "json"
       }
     );
-
-    return extractODataResults(response.data);
   }
 
   async getValueMappingEntries(artifactId, version, schema) {
@@ -200,6 +190,29 @@ class IntegrationSuiteClient {
     }) || null;
   }
 
+  async _getAllPages(url, params = {}) {
+    const results = [];
+    let currentUrl = url;
+    let currentParams = params;
+
+    while (currentUrl) {
+      const response = await this._get(currentUrl, currentParams);
+      const pageItems = extractODataResults(response.data);
+
+      results.push(...pageItems);
+
+      const nextLink = getNextLink(response.data);
+      if (!nextLink) {
+        break;
+      }
+
+      currentUrl = nextLink;
+      currentParams = {};
+    }
+
+    return results;
+  }
+
   async _get(url, params = {}) {
     try {
       return await executeHttpRequest(
@@ -267,6 +280,22 @@ function extractODataResults(data) {
   }
 
   return [];
+}
+
+function getNextLink(data) {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const candidates = [
+    data["@odata.nextLink"],
+    data["odata.nextLink"],
+    data.__next,
+    data.d && (data.d["@odata.nextLink"] || data.d["odata.nextLink"] || data.d.__next),
+    data["d"] && (data.d["@odata.nextLink"] || data.d["odata.nextLink"] || data.d.__next)
+  ];
+
+  return candidates.find(Boolean) || null;
 }
 
 function escapeODataString(value) {

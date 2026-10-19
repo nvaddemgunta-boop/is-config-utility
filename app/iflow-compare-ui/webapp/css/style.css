@@ -97,3 +97,140 @@
   color: #0a6ed1;
   font-weight: 700;
 }
+
+.packageListPanel {
+  height: 100%;
+}
+
+.packageListPanel .sapMPanelContent {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.packageListVBox {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.packageListTree {
+  flex: 1 1 auto;
+  min-height: 18rem;
+  height: clamp(18rem, 31vh, 38vh);
+  max-height: 38vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: block;
+}
+
+/* More aggressive compact layout so the page feels like a review workspace */
+.sapUiResponsiveContentPadding {
+  padding: 0.4rem !important;
+}
+
+.sapUiSmallMargin,
+.sapUiSmallMarginTop,
+.sapUiSmallMarginBottom,
+.sapUiSmallMarginBegin,
+.sapUiSmallMarginEnd,
+.sapUiTinyMarginTop,
+.sapUiTinyMarginBegin,
+.sapUiTinyMarginBottom,
+.sapUiTinyMargin,
+.sapUiTinyMarginEnd {
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+  margin-left: 0.25rem !important;
+  margin-right: 0.25rem !important;
+}
+
+.sapMPanelContent,
+.sapMPanelBGTranslucent .sapMPanelContent,
+.sapMPanelBGTransparent .sapMPanelContent {
+  padding: 0.5rem !important;
+}
+
+.sapMPageHeader .sapMBarPH,
+.sapMPageTitle,
+.sapMTitle,
+.sapMLabel,
+.sapMBtnInner,
+.sapMInputBaseInner,
+.sapMSelectListItem,
+.sapMSearchField,
+.sapMITBText,
+.sapMText {
+  font-size: 0.8rem !important;
+}
+
+.sapMPageHeader {
+  height: 2.2rem !important;
+}
+
+.sapMPageHeader .sapMBarPH {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+.sapMPanelHeader,
+.sapMListHdr,
+.sapMListItemBase,
+.sapMToolbar {
+  min-height: 2rem !important;
+}
+
+.sapMPanelHeaderTB {
+  height: 2.1rem !important;
+}
+
+.sapMPanelHeaderTitle {
+  font-size: 0.9rem !important;
+}
+
+.sapMLIBContent,
+.sapMListItemText,
+.sapMCbLabel,
+.sapMObjStatusText {
+  font-size: 0.8rem !important;
+}
+
+.HBoxCompact .sapMFlexItem,
+.sapMFlexBox {
+  gap: 0.25rem !important;
+}
+
+.packageListTree {
+  flex: 1 1 auto;
+  min-height: 16rem;
+  height: clamp(16rem, 28vh, 33vh);
+  max-height: 33vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: block;
+}
+
+.vmResultMetaRow {
+  gap: 0.75rem;
+}
+
+.vmResultMetaText {
+  flex: 1 1 20rem;
+  min-width: 0;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.vmResultMetaStatus {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.vmArtifactPanel .sapMPanelContent,
+.vmSchemaPanel .sapMPanelContent {
+  overflow: hidden;
+}

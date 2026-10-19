@@ -2,8 +2,8 @@
   "name": "integrate-360-app",
   "version": "1.0.0",
   "dependencies": {
-    "@sap-cloud-sdk/connectivity": "^4.8.0",
-    "@sap-cloud-sdk/http-client": "^4.8.0",
+    "@sap-cloud-sdk/connectivity": "^4.2.0",
+    "@sap-cloud-sdk/http-client": "^4.2.0",
     "@sap/cds": "^9",
     "express": "^5.2.1"
   },
@@ -12,7 +12,11 @@
   },
   "scripts": {
     "start": "cds-serve",
-    "watch": "cds watch"
+    "watch": "cds watch",
+    "test": "node test/integration-suite-client.test.js && node test/value-mapping-compare-service.test.js && node test/value-mapping-ui-transform.test.js"
   },
-  "private": true
+  "private": true,
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
 }

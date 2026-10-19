@@ -25,7 +25,7 @@ sap.ui.define([
   ) {
   "use strict";
 
-  return Controller.extend("chs.iflowcompare.controller.App", {
+  return Controller.extend("btpis.iflowcompare.controller.App", {
 
     onInit: function () {
       this._sourceEnvironment = null;
@@ -117,6 +117,7 @@ sap.ui.define([
           same: 0
         },
         allRows: [],
+        allGroups: [],
         groups: []
       }), "vmComparison");
 
@@ -1182,17 +1183,93 @@ sap.ui.define([
     },
 
     _prepareVmComparisonResults: function (comparisonData) {
-      const allRows = [];
-      const summary = {
-        changed: 0,
-        addedInTarget: 0,
-        removedFromTarget: 0,
-        same: 0
-      };
+      const comparisonGroups = this._buildVmComparisonGroups(comparisonData);
+      const model = this.getView().getModel("vmComparison");
+
+      model.setData({
+        sourceEnvironment: comparisonData.sourceEnvironment || "Source",
+        targetEnvironment: comparisonData.targetEnvironment || "Target",
+        selectedFilter: "ALL",
+        searchText: "",
+        summary: comparisonGroups.summary,
+        allRows: comparisonGroups.allRows,
+        allGroups: comparisonGroups.groups,
+        groups: comparisonGroups.groups
+      });
+    },
+
+    _buildVmComparisonGroups: function (comparisonData) {
+      const artifactMap = new Map();
 
       (comparisonData.results || []).forEach(function (artifact) {
+        const artifactKey = JSON.stringify([
+          artifact.packageId || "",
+          artifact.artifactId || ""
+        ]);
+
+        if (!artifactMap.has(artifactKey)) {
+          artifactMap.set(artifactKey, {
+            packageId: artifact.packageId || "",
+            artifactId: artifact.artifactId || "",
+            artifactName: artifact.artifactName || artifact.artifactId || "",
+            artifactStatus: artifact.status || "",
+            sourceVersion: artifact.sourceVersion || "",
+            targetVersion: artifact.targetVersion || "",
+            differenceCount: 0,
+            sameCount: 0,
+            schemas: []
+          });
+        }
+
+        const artifactGroup = artifactMap.get(artifactKey);
+
         (artifact.schemas || []).forEach(function (schemaResult) {
           const schema = schemaResult.schema || {};
+          const schemaKey = JSON.stringify([
+            schema.srcAgency || "",
+            schema.srcId || "",
+            schema.tgtAgency || "",
+            schema.tgtId || ""
+          ]);
+          const pairKey = this._getVmSchemaPairKey(schema);
+
+          let schemaGroup = artifactGroup.schemas.find(function (schemaItem) {
+            return schemaItem.schemaKey === pairKey;
+          });
+
+          if (!schemaGroup) {
+            schemaGroup = {
+              schemaKey: pairKey,
+              srcAgency: schema.srcAgency || "",
+              srcId: schema.srcId || "",
+              tgtAgency: schema.tgtAgency || "",
+              tgtId: schema.tgtId || "",
+              displayName: this._formatVmSchemaPairName(schema),
+              detailsText: this._formatVmSchemaPairDetails(schema),
+              schemaStatus: schemaResult.status || "",
+              differenceCount: 0,
+              sameCount: 0,
+              directionCount: 0,
+              directions: [],
+              allMappingRows: [],
+              mappingRows: []
+            };
+
+            artifactGroup.schemas.push(schemaGroup);
+          }
+
+          if (!schemaGroup.directions.includes(schemaKey)) {
+            schemaGroup.directions.push(schemaKey);
+            schemaGroup.directionCount += 1;
+            schemaGroup.displayName = this._formatVmSchemaPairName(
+              schemaGroup,
+              schemaGroup.directionCount > 1
+            );
+            schemaGroup.detailsText = this._formatVmSchemaPairDetails(
+              schemaGroup,
+              schemaGroup.directionCount > 1
+            );
+          }
 
           (schemaResult.mappingComparisons || []).forEach(function (mapping) {
             const row = {
@@ -1208,6 +1285,9 @@ sap.ui.define([
               srcId: schema.srcId || "",
               tgtAgency: schema.tgtAgency || "",
               tgtId: schema.tgtId || "",
+              pairKey,
+              directionKey: schemaKey,
+              directionLabel: this._formatVmSchemaName(schema),
 
               sourceValue: mapping.sourceValue || "",
               sourceEnvironmentValue: mapping.sourceEnvironmentValue || "",
@@ -1215,18 +1295,12 @@ sap.ui.define([
               changeType: mapping.changeType || "SAME"
             };
 
-            allRows.push(row);
-
-            this._incrementVmSummary(summary, row.changeType);
+            schemaGroup.allMappingRows.push(row);
           }, this);
-        });
+        }, this);
 
-        /*
-        * Handle an entire artifact that does not exist in target.
-        * No schema/mapping rows may be returned in that scenario.
-        */
         if (artifact.status === "MISSING_IN_TARGET") {
-          allRows.push({
+          const missingRow = {
             packageId: artifact.packageId || "",
             artifactId: artifact.artifactId || "",
             artifactName: artifact.artifactName || artifact.artifactId || "",
@@ -1242,23 +1316,162 @@ sap.ui.define([
             targetEnvironmentValue: "",
             changeType: "REMOVED_FROM_TARGET",
             artifactMissing: true
-          });
+          };
 
-          summary.removedFromTarget += 1;
+          if (artifactGroup.schemas.length === 0) {
+            artifactGroup.schemas.push({
+              schemaKey: JSON.stringify(["", "", "", ""]),
+              srcAgency: "",
+              srcId: "",
+              tgtAgency: "",
+              tgtId: "",
+              displayName: "Artifact missing in target",
+              detailsText: "Artifact-level comparison",
+              schemaStatus: artifact.status,
+              differenceCount: 1,
+              sameCount: 0,
+              directionCount: 0,
+              directions: [],
+              allMappingRows: [missingRow],
+              mappingRows: [missingRow]
+            });
+          }
         }
       }, this);
 
-      const model = this.getView().getModel("vmComparison");
+      return this._finalizeVmComparisonGroups(
+        Array.from(artifactMap.values())
+          .map(function (artifactGroup) {
+            artifactGroup.schemas.sort(function (left, right) {
+              return left.displayName.localeCompare(right.displayName);
+            });
 
-      model.setData({
-        sourceEnvironment: comparisonData.sourceEnvironment || "Source",
-        targetEnvironment: comparisonData.targetEnvironment || "Target",
-        selectedFilter: "ALL",
-        searchText: "",
-        summary,
+            return artifactGroup;
+          })
+          .sort(function (left, right) {
+            return left.artifactName.localeCompare(right.artifactName);
+          })
+      );
+    },
+
+    _finalizeVmComparisonGroups: function (groups) {
+      const allRows = [];
+      const summary = {
+        changed: 0,
+        addedInTarget: 0,
+        removedFromTarget: 0,
+        same: 0
+      };
+
+      (groups || []).forEach(function (artifactGroup) {
+        artifactGroup.differenceCount = 0;
+        artifactGroup.sameCount = 0;
+
+        (artifactGroup.schemas || []).forEach(function (schemaGroup) {
+          const visibleRows = this._selectVmVisibleRows(schemaGroup);
+
+          schemaGroup.mappingRows = visibleRows;
+          schemaGroup.differenceCount = 0;
+          schemaGroup.sameCount = 0;
+
+          visibleRows.forEach(function (row) {
+            allRows.push(row);
+            this._incrementVmSummary(summary, row.changeType);
+
+            if (row.changeType === "SAME") {
+              schemaGroup.sameCount += 1;
+              artifactGroup.sameCount += 1;
+            } else {
+              schemaGroup.differenceCount += 1;
+              artifactGroup.differenceCount += 1;
+            }
+          }, this);
+        }, this);
+      }, this);
+
+      return {
+        groups,
         allRows,
-        groups: this._buildVmGroups(allRows)
+        summary
+      };
+    },
+
+    _selectVmVisibleRows: function (schemaGroup) {
+      const allMappingRows = schemaGroup.allMappingRows || schemaGroup.mappingRows || [];
+      const preferredDirectionKey = JSON.stringify([
+        schemaGroup.srcAgency || "",
+        schemaGroup.srcId || "",
+        schemaGroup.tgtAgency || "",
+        schemaGroup.tgtId || ""
+      ]);
+
+      if ((schemaGroup.directionCount || 0) < 2 || allMappingRows.length === 0) {
+        return allMappingRows;
+      }
+
+      const rowsByDirection = new Map();
+
+      allMappingRows.forEach(function (row) {
+        const directionKey = row.directionKey || row.directionLabel || "";
+
+        if (!rowsByDirection.has(directionKey)) {
+          rowsByDirection.set(directionKey, []);
+        }
+
+        rowsByDirection.get(directionKey).push(row);
       });
+
+      const rankedDirections = Array.from(rowsByDirection.entries())
+        .map(function (entry) {
+          const rows = entry[1] || [];
+          const populatedFieldCount = rows.reduce(function (count, row) {
+            return count + this._getVmRowPopulationScore(row);
+          }.bind(this), 0);
+
+          return {
+            directionKey: entry[0],
+            rows,
+            isPreferredDirection: entry[0] === preferredDirectionKey,
+            populatedFieldCount
+          };
+        }, this)
+        .sort(function (left, right) {
+          if (left.isPreferredDirection !== right.isPreferredDirection) {
+            return left.isPreferredDirection ? -1 : 1;
+          }
+
+          if (right.populatedFieldCount !== left.populatedFieldCount) {
+            return right.populatedFieldCount - left.populatedFieldCount;
+          }
+
+          if (right.rows.length !== left.rows.length) {
+            return right.rows.length - left.rows.length;
+          }
+
+          return left.directionKey.localeCompare(right.directionKey);
+        });
+
+      return rankedDirections.length > 0
+        ? rankedDirections[0].rows
+        : allMappingRows;
+    },
+
+    _getVmRowPopulationScore: function (row) {
+      let score = 0;
+
+      if (row.sourceValue) {
+        score += 1;
+      }
+
+      if (row.sourceEnvironmentValue) {
+        score += 1;
+      }
+
+      if (row.targetEnvironmentValue) {
+        score += 1;
+      }
+
+      return score;
     },
 
     _incrementVmSummary: function (summary, changeType) {
@@ -1375,6 +1588,59 @@ sap.ui.define([
         .join(" / ");
 
       return `${sourceSchema} → ${targetSchema}`;
+    },
+
+    _getVmSchemaPairKey: function (row) {
+      const forwardKey = JSON.stringify([
+        row.srcAgency || "",
+        row.srcId || "",
+        row.tgtAgency || "",
+        row.tgtId || ""
+      ]);
+      const reverseKey = JSON.stringify([
+        row.tgtAgency || "",
+        row.tgtId || "",
+        row.srcAgency || "",
+        row.srcId || ""
+      ]);
+
+      return [forwardKey, reverseKey].sort()[0];
+    },
+
+    _formatVmSchemaPairName: function (row, isBidirectional) {
+      const sourceSchema = [row.srcAgency, row.srcId]
+        .filter(Boolean)
+        .join(" / ");
+
+      const targetSchema = [row.tgtAgency, row.tgtId]
+        .filter(Boolean)
+        .join(" / ");
+
+      if (!sourceSchema && !targetSchema) {
+        return "Artifact-level difference";
+      }
+
+      return isBidirectional
+        ? `${sourceSchema} ↔ ${targetSchema}`
+        : `${sourceSchema} → ${targetSchema}`;
+    },
+
+    _formatVmSchemaPairDetails: function (row, isBidirectional) {
+      const sourceSchema = [row.srcAgency, row.srcId]
+        .filter(Boolean)
+        .join(" / ");
+
+      const targetSchema = [row.tgtAgency, row.tgtId]
+        .filter(Boolean)
+        .join(" / ");
+
+      if (!sourceSchema && !targetSchema) {
+        return "Artifact-level comparison";
+      }
+
+      return isBidirectional
+        ? `Bi-directional mapping pair: ${sourceSchema || "-"} | ${targetSchema || "-"}`
+        : `Source schema: ${sourceSchema || "-"} | Target schema: ${targetSchema || "-"}`;
     },
 
     formatVmChangeText: function (changeType) {
@@ -1498,7 +1764,64 @@ sap.ui.define([
         return matchesFilter && matchesSearch;
       });
 
-      model.setProperty("/groups", this._buildVmGroups(filteredRows));
+      model.setProperty(
+        "/groups",
+        this._filterVmComparisonGroups(data.allGroups || [], filteredRows)
+      );
+    },
+
+    _filterVmComparisonGroups: function (groups, filteredRows) {
+      const filteredRowSet = new Set(filteredRows || []);
+
+      return (groups || []).map(function (artifactGroup) {
+        const filteredArtifactGroup = {
+          packageId: artifactGroup.packageId || "",
+          artifactId: artifactGroup.artifactId || "",
+          artifactName: artifactGroup.artifactName || artifactGroup.artifactId || "",
+          artifactStatus: artifactGroup.artifactStatus || "",
+          sourceVersion: artifactGroup.sourceVersion || "",
+          targetVersion: artifactGroup.targetVersion || "",
+          differenceCount: 0,
+          sameCount: 0,
+          schemas: []
+        };
+
+        (artifactGroup.schemas || []).forEach(function (schemaGroup) {
+          const filteredMappingRows = (schemaGroup.mappingRows || []).filter(function (row) {
+            return filteredRowSet.has(row);
+          });
+
+          const filteredSchemaGroup = {
+            schemaKey: schemaGroup.schemaKey,
+            srcAgency: schemaGroup.srcAgency || "",
+            srcId: schemaGroup.srcId || "",
+            tgtAgency: schemaGroup.tgtAgency || "",
+            tgtId: schemaGroup.tgtId || "",
+            displayName: schemaGroup.displayName || "",
+            detailsText: schemaGroup.detailsText || "",
+            schemaStatus: schemaGroup.schemaStatus || "",
+            differenceCount: 0,
+            sameCount: 0,
+            directionCount: schemaGroup.directionCount || 0,
+            directions: schemaGroup.directions || [],
+            mappingRows: filteredMappingRows
+          };
+
+          filteredMappingRows.forEach(function (row) {
+            if (row.changeType === "SAME") {
+              filteredSchemaGroup.sameCount += 1;
+            } else {
+              filteredSchemaGroup.differenceCount += 1;
+            }
+          });
+
+          filteredArtifactGroup.sameCount += filteredSchemaGroup.sameCount;
+          filteredArtifactGroup.differenceCount += filteredSchemaGroup.differenceCount;
+          filteredArtifactGroup.schemas.push(filteredSchemaGroup);
+        });
+
+        return filteredArtifactGroup;
+      });
     },
 
     _applyParameterResultFilters: function () {
@@ -1635,8 +1958,6 @@ sap.ui.define([
             "Unable to compare selected Value Mapping artifacts."
           );
         }
-
-        console.log("[UI] Value Mapping comparison result", data);
 
         this._prepareVmComparisonResults(data);
 
