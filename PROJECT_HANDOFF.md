@@ -57,7 +57,7 @@ Project root:
  
 UI namespace:
  
-    chs.iflowcompare
+    btpis.iflowcompare
  
 Supported environment identifiers:
  
@@ -133,7 +133,7 @@ Expected scripts:
  
 A minimal CDS service was introduced so CAP could start:
  
-    namespace chs.integrate360;
+    namespace btpis.integrate360;
  
     service IFlowCompareService @(path: '/odata/v4/iflow') {
       entity Health {
