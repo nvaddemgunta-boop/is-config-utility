@@ -76,7 +76,7 @@
                     id="btnDeploymentVersion"
                     icon="sap-icon://history"
                     type="Transparent"
-                    tooltip="Deployment Version Comparison"
+                    tooltip="Deployment Runtime Comparison"
                     press=".onFeatureButtonPress"
                     class="featureCircleButton">
                     <customData>
@@ -85,7 +85,7 @@
                   </Button>
 
                   <Text
-                    text="Deployment Version Comparison"
+                    text="Deployment Runtime Comparison"
                     wrapping="true"
                     textAlign="Center"
                     class="featureTileText" />
@@ -198,8 +198,12 @@
             showIcon="true"
             class="sapUiSmallMarginBottom" />
 
-          <HBox width="100%" class="sapUiSmallMarginBottom">
-            <VBox width="100%" class="sapUiSmallMarginEnd">
+          <HBox
+            width="100%"
+            wrap="Wrap"
+            alignItems="End"
+            class="environmentSelectionRow sapUiSmallMarginBottom">
+            <VBox class="environmentSelectionField">
               <Label text="Source Environment" />
               <Select
                 id="sourceEnvSelect"
@@ -215,7 +219,7 @@
               </Select>
             </VBox>
 
-            <VBox width="100%">
+            <VBox class="environmentSelectionField">
               <Label text="Target Environment" />
               <Select
                 id="targetEnvSelect"
@@ -598,9 +602,11 @@
           <!-- Environment selection -->
           <HBox
             width="100%"
+            wrap="Wrap"
+            alignItems="End"
             class="sapUiSmallMarginBottom">
 
-            <VBox width="50%" class="sapUiSmallMarginEnd">
+            <VBox class="environmentSelectionField">
               <Label text="Source Environment" />
 
               <Select
@@ -614,7 +620,7 @@
               </Select>
             </VBox>
 
-            <VBox width="50%">
+            <VBox class="environmentSelectionField">
               <Label text="Target Environment" />
 
               <Select
@@ -1067,6 +1073,313 @@
             </VBox>
           </Panel>
 
+        </VBox>
+
+        <VBox visible="{= ${view>/activeFeature} === 'DEPLOYMENT_VERSION' }">
+          <Panel width="100%" class="sapUiSmallMarginBottom">
+            <VBox class="sapUiSmallMargin">
+              <Title text="Deployment Runtime Comparison" level="H3" />
+              <Text
+                text="Compare deployed artifact versions and runtime status across Integration Suite environments."
+                class="sapUiTinyMarginTop" />
+            </VBox>
+          </Panel>
+
+          <SegmentedButton
+            selectedKey="{deploymentRuntime>/mode}"
+            selectionChange=".onDeploymentModeChange"
+            class="sapUiSmallMarginBottom">
+            <items>
+              <SegmentedButtonItem key="PACKAGE" text="Package Comparison" />
+              <SegmentedButtonItem key="ARTIFACT" text="Artifact Pair Comparison" />
+            </items>
+          </SegmentedButton>
+
+          <HBox
+            width="100%"
+            wrap="Wrap"
+            alignItems="End"
+            class="environmentSelectionRow sapUiSmallMarginBottom">
+            <VBox class="environmentSelectionField">
+              <Label text="Source Environment" />
+              <Select
+                id="runtimeSourceEnvSelect"
+                width="100%"
+                forceSelection="false"
+                selectedKey="{deploymentRuntime>/sourceEnvironmentSelection}"
+                items="{env>/environments}"
+                change=".onDeploymentSourceEnvironmentChange">
+                <core:Item key="__SELECT_SOURCE_ENVIRONMENT__" text="Select source environment" />
+                <core:Item key="{env>id}" text="{env>name}" />
+              </Select>
+            </VBox>
+
+            <VBox class="environmentSelectionField">
+              <Label text="Target Environment" />
+              <Select
+                id="runtimeTargetEnvSelect"
+                width="100%"
+                forceSelection="false"
+                selectedKey="{deploymentRuntime>/targetEnvironmentSelection}"
+                items="{env>/environments}"
+                change=".onDeploymentTargetEnvironmentChange">
+                <core:Item key="__SELECT_TARGET_ENVIRONMENT__" text="Select target environment" />
+                <core:Item key="{env>id}" text="{env>name}" />
+              </Select>
+            </VBox>
+          </HBox>
+
+          <VBox visible="{= ${deploymentRuntime>/mode} === 'PACKAGE' }">
+            <Panel headerText="Source Packages" class="sapUiSmallMarginBottom">
+              <VBox class="sapUiSmallMargin">
+                <HBox alignItems="Center" class="runtimePackageToolbar">
+                  <CheckBox
+                    text="Select all source packages"
+                    selected="{deploymentRuntime>/allPackagesSelected}"
+                    enabled="{= ${deploymentRuntime>/packages}.length > 0 }"
+                    select=".onDeploymentSelectAllPackages" />
+                  <ToolbarSpacer />
+                  <ObjectStatus
+                    text="{= ${deploymentRuntime>/selectedPackageCount} + ' selected' }"
+                    state="Information" />
+                </HBox>
+
+                <SearchField
+                  width="100%"
+                  placeholder="Search source packages"
+                  liveChange=".onDeploymentPackageSearch"
+                  search=".onDeploymentPackageSearch"
+                  class="sapUiSmallMarginBottom" />
+
+                <ScrollContainer
+                  width="100%"
+                  height="19rem"
+                  vertical="true"
+                  horizontal="false"
+                  class="runtimePackageScroll">
+                  <List
+                    id="runtimePackageList"
+                    width="100%"
+                    busy="{deploymentRuntime>/packageLoading}"
+                    noDataText="Select a source environment to load packages."
+                    items="{deploymentRuntime>/packages}">
+                    <CustomListItem>
+                      <HBox alignItems="Center" width="100%">
+                        <CheckBox
+                          selected="{deploymentRuntime>selected}"
+                          select=".onDeploymentPackageSelect" />
+                        <VBox class="sapUiTinyMarginBegin runtimePackageText">
+                          <Text text="{deploymentRuntime>packageName}" wrapping="true" />
+                          <Text text="{deploymentRuntime>packageId}" wrapping="false" class="runtimePackageId" />
+                        </VBox>
+                        </HBox>
+                    </CustomListItem>
+                  </List>
+                </ScrollContainer>
+              </VBox>
+            </Panel>
+          </VBox>
+
+          <VBox visible="{= ${deploymentRuntime>/mode} === 'ARTIFACT' }">
+            <VBox class="sapUiSmallMarginBottom">
+              <Label id="runtimeArtifactTypeLabel" text="Artifact Type" />
+              <HBox
+                id="runtimeArtifactTypeFilter"
+                width="100%"
+                wrap="Wrap"
+                justifyContent="SpaceBetween"
+                items="{deploymentRuntime>/artifactTypes}">
+                <ToggleButton
+                  text="{deploymentRuntime>text}"
+                  icon="{deploymentRuntime>icon}"
+                  tooltip="{deploymentRuntime>text}"
+                  pressed="{= ${deploymentRuntime>key} === ${deploymentRuntime>/selectedArtifactType} }"
+                  press=".onDeploymentArtifactTypeChange">
+                  <layoutData>
+                    <FlexItemData growFactor="1" shrinkFactor="0" baseSize="auto" />
+                  </layoutData>
+                </ToggleButton>
+              </HBox>
+            </VBox>
+            <HBox width="100%" wrap="Wrap" class="runtimeArtifactPairRow">
+              <Panel headerText="Source Artifact" class="runtimeArtifactPairPanel">
+                <layoutData>
+                  <FlexItemData growFactor="1" shrinkFactor="1" baseSize="0" />
+                </layoutData>
+                <VBox class="sapUiSmallMargin">
+                  <HBox alignItems="Center" class="runtimeArtifactListHeading">
+                    <Label text="Source Runtime Artifacts" />
+                    <ToolbarSpacer />
+                    <ObjectStatus
+                      text="{= ${deploymentRuntime>/selectedSourceArtifactKey} ? '1 selected' : '0 selected' }"
+                      state="Success" />
+                  </HBox>
+                  <SearchField
+                    width="100%"
+                    placeholder="Search source runtime artifacts"
+                    value="{deploymentRuntime>/sourceArtifactSearch}"
+                    liveChange=".onDeploymentArtifactSearch"
+                    search=".onDeploymentArtifactSearch"
+                    class="sapUiSmallMarginBottom">
+                    <customData>
+                      <core:CustomData key="side" value="source" writeToDom="false" />
+                    </customData>
+                  </SearchField>
+                  <ScrollContainer width="100%" height="20rem" vertical="true" horizontal="false" class="runtimeArtifactListScroll">
+                    <List
+                      width="100%"
+                      busy="{deploymentRuntime>/sourceArtifactsLoading}"
+                      noDataText="Select a source environment to load runtime artifacts."
+                      items="{deploymentRuntime>/sourceVisibleArtifacts}">
+                      <CustomListItem>
+                        <HBox alignItems="Center" width="100%" class="runtimeArtifactItem">
+                          <RadioButton
+                            groupName="deploymentRuntimeSourceArtifact"
+                            selected="{= ${deploymentRuntime>artifactKey} === ${deploymentRuntime>/selectedSourceArtifactKey} }"
+                            select=".onDeploymentRuntimeArtifactSelect">
+                            <customData>
+                              <core:CustomData key="side" value="source" writeToDom="false" />
+                            </customData>
+                          </RadioButton>
+                          <VBox class="sapUiTinyMarginBegin runtimePackageText">
+                            <Text text="{deploymentRuntime>artifactName}" wrapping="true" />
+                            <Text text="{= ${deploymentRuntime>artifactType} + ' · ' + ${deploymentRuntime>artifactId} }" class="runtimePackageId" wrapping="false" />
+                          </VBox>
+                          <ToolbarSpacer />
+                          <ObjectStatus
+                            text="{deploymentRuntime>runtimeStatus}"
+                            state="{= ${deploymentRuntime>runtimeStatus} === 'STARTED' ? 'Success' : 'Warning' }" />
+                        </HBox>
+                      </CustomListItem>
+                    </List>
+                  </ScrollContainer>
+                </VBox>
+              </Panel>
+
+              <Panel headerText="Target Artifact" class="runtimeArtifactPairPanel">
+                <layoutData>
+                  <FlexItemData growFactor="1" shrinkFactor="1" baseSize="0" />
+                </layoutData>
+                <VBox class="sapUiSmallMargin">
+                  <HBox alignItems="Center" class="runtimeArtifactListHeading">
+                    <Label text="Target Runtime Artifacts" />
+                    <ToolbarSpacer />
+                    <ObjectStatus
+                      text="{= ${deploymentRuntime>/selectedTargetArtifactKey} ? '1 selected' : '0 selected' }"
+                      state="Success" />
+                  </HBox>
+                  <SearchField
+                    width="100%"
+                    placeholder="Search target runtime artifacts"
+                    value="{deploymentRuntime>/targetArtifactSearch}"
+                    liveChange=".onDeploymentArtifactSearch"
+                    search=".onDeploymentArtifactSearch"
+                    class="sapUiSmallMarginBottom">
+                    <customData>
+                      <core:CustomData key="side" value="target" writeToDom="false" />
+                    </customData>
+                  </SearchField>
+                  <ScrollContainer width="100%" height="20rem" vertical="true" horizontal="false" class="runtimeArtifactListScroll">
+                    <List
+                      width="100%"
+                      busy="{deploymentRuntime>/targetArtifactsLoading}"
+                      noDataText="Select a target environment to load runtime artifacts."
+                      items="{deploymentRuntime>/targetVisibleArtifacts}">
+                      <CustomListItem>
+                        <HBox alignItems="Center" width="100%" class="runtimeArtifactItem">
+                          <RadioButton
+                            groupName="deploymentRuntimeTargetArtifact"
+                            selected="{= ${deploymentRuntime>artifactKey} === ${deploymentRuntime>/selectedTargetArtifactKey} }"
+                            select=".onDeploymentRuntimeArtifactSelect">
+                            <customData>
+                              <core:CustomData key="side" value="target" writeToDom="false" />
+                            </customData>
+                          </RadioButton>
+                          <VBox class="sapUiTinyMarginBegin runtimePackageText">
+                            <Text text="{deploymentRuntime>artifactName}" wrapping="true" />
+                            <Text text="{= ${deploymentRuntime>artifactType} + ' · ' + ${deploymentRuntime>artifactId} }" class="runtimePackageId" wrapping="false" />
+                          </VBox>
+                          <ToolbarSpacer />
+                          <ObjectStatus
+                            text="{deploymentRuntime>runtimeStatus}"
+                            state="{= ${deploymentRuntime>runtimeStatus} === 'STARTED' ? 'Success' : 'Warning' }" />
+                        </HBox>
+                      </CustomListItem>
+                    </List>
+                  </ScrollContainer>
+                </VBox>
+              </Panel>
+            </HBox>
+          </VBox>
+
+          <Toolbar class="sapUiSmallMarginTop sapUiSmallMarginBottom">
+            <Text
+              visible="{= ${deploymentRuntime>/mode} === 'PACKAGE' }"
+              text="{= ${deploymentRuntime>/selectedPackageCount} + ' package(s) selected' }" />
+            <ToolbarSpacer />
+            <Button
+              text="{= ${deploymentRuntime>/mode} === 'ARTIFACT' ? 'Compare Selected Artifact Pair' : 'Compare Runtime Versions' }"
+              type="Emphasized"
+              busy="{deploymentRuntime>/busy}"
+              press=".onDeploymentRuntimeCompare" />
+          </Toolbar>
+
+          <Panel headerText="Runtime Comparison Results">
+            <VBox class="sapUiSmallMargin">
+              <HBox wrap="Wrap" class="runtimeSummaryRow sapUiSmallMarginBottom">
+                <ObjectStatus text="{= ${deploymentRuntime>/summary/same} + ' Same' }" state="Success" />
+                <ObjectStatus text="{= ${deploymentRuntime>/summary/different} + ' Different' }" state="Warning" />
+                <ObjectStatus text="{= ${deploymentRuntime>/summary/missingInSource} + ' Missing in source' }" state="Error" />
+                <ObjectStatus text="{= ${deploymentRuntime>/summary/missingInTarget} + ' Missing in target' }" state="Error" />
+                <ObjectStatus text="{= ${deploymentRuntime>/summary/notDeployed} + ' Not deployed' }" state="Information" />
+                <ObjectStatus text="{= ${deploymentRuntime>/summary/errors} + ' Errors' }" state="Error" />
+              </HBox>
+
+              <List
+                width="100%"
+                noDataText="Select environments and compare packages or artifacts."
+                items="{deploymentRuntime>/packageResults}">
+                <CustomListItem>
+                  <Panel
+                    width="100%"
+                    expandable="true"
+                    expanded="true"
+                    headerText="{deploymentRuntime>packageName}">
+                    <Table
+                      width="100%"
+                      showNoData="true"
+                      noDataText="No runtime artifacts were found for this package."
+                      items="{deploymentRuntime>artifacts}">
+                      <columns>
+                        <Column width="24%"><Text text="Artifact" /></Column>
+                        <Column width="14%"><Text text="Type" /></Column>
+                        <Column width="14%"><Text text="Source Version" /></Column>
+                        <Column width="14%"><Text text="Source Status" /></Column>
+                        <Column width="14%"><Text text="Target Version" /></Column>
+                        <Column width="14%"><Text text="Target Status" /></Column>
+                        <Column width="16%"><Text text="Comparison" /></Column>
+                      </columns>
+                      <items>
+                        <ColumnListItem highlight="{path: 'deploymentRuntime>status', formatter: '.formatRuntimeComparisonState'}">
+                          <cells>
+                            <Text text="{deploymentRuntime>artifactName}" wrapping="true" />
+                            <Text text="{deploymentRuntime>artifactType}" wrapping="true" />
+                            <Text text="{= ${deploymentRuntime>sourceVersion} || '-' }" />
+                            <Text text="{deploymentRuntime>sourceStatus}" />
+                            <Text text="{= ${deploymentRuntime>targetVersion} || '-' }" />
+                            <Text text="{deploymentRuntime>targetStatus}" />
+                            <ObjectStatus
+                              text="{path: 'deploymentRuntime>status', formatter: '.formatRuntimeComparisonText'}"
+                              state="{path: 'deploymentRuntime>status', formatter: '.formatRuntimeComparisonState'}" />
+                          </cells>
+                        </ColumnListItem>
+                      </items>
+                    </Table>
+                  </Panel>
+                </CustomListItem>
+              </List>
+            </VBox>
+          </Panel>
         </VBox>
 
       </VBox>

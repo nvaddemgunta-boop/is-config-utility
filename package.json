@@ -2,7 +2,7 @@
   "name": "integrate-360-app",
   "version": "1.0.0",
   "dependencies": {
-    "@sap-cloud-sdk/connectivity": "^4.2.0",
+    "@sap-cloud-sdk/connectivity": "^4.10.0",
     "@sap-cloud-sdk/http-client": "^4.2.0",
     "@sap/cds": "^9",
     "express": "^5.2.1"
