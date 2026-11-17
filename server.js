@@ -11,6 +11,12 @@ const { compareArtifacts } = require("./srv/lib/compare-service");
 
 const { getValueMappingPackageCatalog, getValueMappingsForPackage, clearValueMappingCache} = require("./srv/lib/value-mapping-catalog-service");
 const { compareValueMappings } = require("./srv/lib/value-mapping-compare-service");
+const {
+  getDeploymentRuntimePackages,
+  getDeploymentRuntimeArtifacts,
+  getDeploymentRuntimeArtifactCatalog,
+  compareDeploymentRuntime
+} = require("./srv/lib/deployment-runtime-service");
 const { IntegrationSuiteClient } = require("./srv/lib/integration-suite-client");
 
 cds.on("bootstrap", (app) => {
@@ -128,6 +134,76 @@ cds.on("bootstrap", (app) => {
             body.targetEnvironment,
             body.selectedArtifacts
           );
+
+      res.json(result);
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/deployment-runtime/packages", async (req, res) => {
+    try {
+      const environment = req.query.environment;
+      if (!environment) {
+        return res.status(400).json({
+          error: {
+            code: "MISSING_ENVIRONMENT",
+            message: "Query parameter 'environment' is required."
+          }
+        });
+      }
+
+      res.json(await getDeploymentRuntimePackages(environment));
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/deployment-runtime/package-artifacts", async (req, res) => {
+    try {
+      const environment = req.query.environment;
+      const packageId = req.query.packageId;
+      if (!environment || !packageId) {
+        return res.status(400).json({
+          error: {
+            code: "MISSING_PARAMETERS",
+            message: "Query parameters 'environment' and 'packageId' are required."
+          }
+        });
+      }
+
+      res.json(await getDeploymentRuntimeArtifacts(environment, packageId));
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.get("/api/deployment-runtime/artifacts", async (req, res) => {
+    try {
+      const environment = req.query.environment;
+      if (!environment) {
+        return res.status(400).json({
+          error: {
+            code: "MISSING_ENVIRONMENT",
+            message: "Query parameter 'environment' is required."
+          }
+        });
+      }
+
+      res.json(await getDeploymentRuntimeArtifactCatalog(environment));
+    } catch (error) {
+      handleError(res, error);
+    }
+  });
+
+  app.post("/api/deployment-runtime/compare", async (req, res) => {
+    try {
+      const body = req.body || {};
+      const result = await compareDeploymentRuntime(
+        body.sourceEnvironment,
+        body.targetEnvironment,
+        body
+      );
 
       res.json(result);
     } catch (error) {

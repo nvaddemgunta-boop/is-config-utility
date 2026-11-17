@@ -31,6 +31,51 @@ class IntegrationSuiteClient {
     return this._getAllPages(url);
   }
 
+  async getDeploymentDesignTimeArtifactsForPackage(packageId) {
+    const packageKey = encodeURIComponent(escapeODataString(packageId));
+    const artifactTypes = [
+      { entitySet: "IntegrationDesigntimeArtifacts", label: "Integration Flow" },
+      { entitySet: "MessageMappingDesigntimeArtifacts", label: "Message Mapping" },
+      { entitySet: "ValueMappingDesigntimeArtifacts", label: "Value Mapping" },
+      { entitySet: "ScriptCollectionDesigntimeArtifacts", label: "Script Collection" }
+    ];
+
+    const artifactCollections = await Promise.all(artifactTypes.map(async function (type) {
+      const artifacts = await this._getAllPages(
+        `/IntegrationPackages('${packageKey}')/${type.entitySet}`,
+        { "$format": "json" }
+      );
+
+      return artifacts.map(function (artifact) {
+        return {
+          packageId,
+          artifactId: artifact.Id || artifact.ID || artifact.ArtifactId || artifact.artifactId || "",
+          artifactName: artifact.Name || artifact.ArtifactName || artifact.Id || artifact.ID || "",
+          artifactType: type.label,
+          designTimeVersion: artifact.Version || artifact.version || ""
+        };
+      });
+    }, this));
+
+    return artifactCollections.flat();
+  }
+
+  async getRuntimeArtifactStatus(artifactId) {
+    const artifactKey = escapeODataString(artifactId);
+    const response = await this._get(
+      `/IntegrationRuntimeArtifacts('${artifactKey}')`,
+      { "$format": "json" }
+    );
+
+    return extractODataEntity(response.data);
+  }
+
+  async getRuntimeArtifacts() {
+    return this._getAllPages("/IntegrationRuntimeArtifacts", {
+      "$format": "json"
+    });
+  }
+
   async getDesignTimeArtifact(packageId, artifactId) {
     /**
      * Safer approach:
@@ -282,6 +327,30 @@ function extractODataResults(data) {
   return [];
 }
 
+function extractODataEntity(data) {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  if (data.d && !Array.isArray(data.d.results)) {
+    return data.d;
+  }
+
+  if (Array.isArray(data.d?.results)) {
+    return data.d.results[0] || null;
+  }
+
+  if (Array.isArray(data.value)) {
+    return data.value[0] || null;
+  }
+
+  if (Array.isArray(data)) {
+    return data[0] || null;
+  }
+
+  return data;
+}
+
 function getNextLink(data) {
   if (!data || typeof data !== "object") {
     return null;
@@ -320,5 +389,6 @@ function buildSafeHttpErrorMessage(error, environmentId, url) {
 module.exports = {
   IntegrationSuiteClient,
   extractODataResults,
+  extractODataEntity,
   getValueMappingArtifactVersion
 };

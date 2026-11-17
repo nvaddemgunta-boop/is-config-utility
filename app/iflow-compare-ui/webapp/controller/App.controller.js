@@ -44,6 +44,11 @@ sap.ui.define([
 
       this._vmSourceSearchText = "";
       this._vmTargetSearchText = "";
+      this._deploymentSourcePackages = [];
+      this._deploymentTargetPackages = [];
+      this._deploymentPackageRequests = { source: 0, target: 0 };
+      this._deploymentArtifactRequests = { source: 0, target: 0 };
+      this._deploymentCompareRequest = 0;
 
       this.getView().setModel(new JSONModel({
         environments: []
@@ -121,6 +126,47 @@ sap.ui.define([
         groups: []
       }), "vmComparison");
 
+      this.getView().setModel(new JSONModel({
+        mode: "PACKAGE",
+        sourceEnvironment: "",
+        targetEnvironment: "",
+        sourceEnvironmentSelection: "__SELECT_SOURCE_ENVIRONMENT__",
+        targetEnvironmentSelection: "__SELECT_TARGET_ENVIRONMENT__",
+        packageSearch: "",
+        packages: [],
+        sourcePackages: [],
+        targetPackages: [],
+        sourceArtifacts: [],
+        targetArtifacts: [],
+        sourceVisibleArtifacts: [],
+        targetVisibleArtifacts: [],
+        sourceArtifactSearch: "",
+        targetArtifactSearch: "",
+        selectedArtifactType: "__ALL_TYPES__",
+        artifactTypes: [{ key: "__ALL_TYPES__", text: "All Types", icon: "sap-icon://grid" }],
+        sourceArtifactsLoading: false,
+        targetArtifactsLoading: false,
+        selectedSourcePackageId: "",
+        selectedTargetPackageId: "",
+        selectedSourceArtifactKey: "",
+        selectedTargetArtifactKey: "",
+        allPackagesSelected: false,
+        selectedPackageCount: 0,
+        packageLoading: false,
+        busy: false,
+        summary: {
+          packagesCompared: 0,
+          totalArtifacts: 0,
+          same: 0,
+          different: 0,
+          missingInSource: 0,
+          missingInTarget: 0,
+          notDeployed: 0,
+          errors: 0
+        },
+        packageResults: []
+      }), "deploymentRuntime");
+
       this._loadEnvironments();
       this._setActiveFeatureStep("IFLOW_CONFIG");
     },
@@ -147,7 +193,7 @@ sap.ui.define([
       const featureNames = {
         IFLOW_CONFIG: "Integration Flow Configuration",
         VALUE_MAPPING: "Value Mapping Comparison",
-        DEPLOYMENT_VERSION: "Deployment Version Comparison",
+        DEPLOYMENT_VERSION: "Deployment Runtime Comparison",
         CONFIG_EXPORT: "Configuration Export",
         TENANT_SEARCH: "Tenant Configuration Search",
         YAML_VALIDATOR: "YAML Validator",
@@ -178,7 +224,7 @@ sap.ui.define([
       const featureNames = {
         IFLOW_CONFIG: "Integration Flow Configuration",
         VALUE_MAPPING: "Value Mapping Comparison",
-        DEPLOYMENT_VERSION: "Deployment Version Comparison",
+        DEPLOYMENT_VERSION: "Deployment Runtime Comparison",
         CONFIG_EXPORT: "Configuration Export",
         TENANT_SEARCH: "Tenant Configuration Search",
         YAML_VALIDATOR: "YAML Validator",
@@ -187,7 +233,8 @@ sap.ui.define([
 
       const supportedFeatures = [
         "IFLOW_CONFIG",
-        "VALUE_MAPPING"
+        "VALUE_MAPPING",
+        "DEPLOYMENT_VERSION"
       ];
 
       if (!supportedFeatures.includes(featureKey)) {
@@ -204,6 +251,568 @@ sap.ui.define([
       this._setActiveFeatureStep(featureKey);
 
       MessageToast.show(`${featureNames[featureKey]} is active.`);
+    },
+
+    onDeploymentModeChange: function (event) {
+      const mode = event.getParameter("item").getKey();
+      const model = this.getView().getModel("deploymentRuntime");
+      model.setProperty("/mode", mode);
+      this._clearDeploymentResults();
+
+      if (mode === "ARTIFACT") {
+        const sourceEnvironment = model.getProperty("/sourceEnvironment");
+        const targetEnvironment = model.getProperty("/targetEnvironment");
+        if (sourceEnvironment) {
+          this._loadDeploymentRuntimeArtifacts(sourceEnvironment, "source");
+        }
+        if (targetEnvironment) {
+          this._loadDeploymentRuntimeArtifacts(targetEnvironment, "target");
+        }
+      }
+    },
+
+    onDeploymentSourceEnvironmentChange: async function (event) {
+      const selectedKey = event.getSource().getSelectedKey();
+      const environment = selectedKey === "__SELECT_SOURCE_ENVIRONMENT__"
+        ? ""
+        : selectedKey;
+      const model = this.getView().getModel("deploymentRuntime");
+      const mode = model.getProperty("/mode");
+
+      model.setProperty("/sourceEnvironmentSelection", selectedKey);
+      model.setProperty("/sourceEnvironment", environment);
+      model.setProperty("/selectedSourcePackageId", "");
+      model.setProperty("/sourceArtifacts", []);
+      model.setProperty("/sourceVisibleArtifacts", []);
+      model.setProperty("/selectedSourceArtifactKey", "");
+      model.setProperty("/sourceArtifactsLoading", false);
+      model.setProperty("/packages", []);
+      model.setProperty("/selectedPackageCount", 0);
+      model.setProperty("/allPackagesSelected", false);
+      this._deploymentSourcePackages = [];
+      this._deploymentPackageRequests.source += 1;
+      this._deploymentArtifactRequests.source += 1;
+      this._clearDeploymentResults();
+
+      if (environment && mode === "ARTIFACT") {
+        await this._loadDeploymentRuntimeArtifacts(environment, "source");
+      } else if (environment) {
+        await this._loadDeploymentPackages(environment, "source");
+      } else {
+        this._applyDeploymentPackageFilter();
+      }
+    },
+
+    onDeploymentTargetEnvironmentChange: async function (event) {
+      const selectedKey = event.getSource().getSelectedKey();
+      const environment = selectedKey === "__SELECT_TARGET_ENVIRONMENT__"
+        ? ""
+        : selectedKey;
+      const model = this.getView().getModel("deploymentRuntime");
+      const mode = model.getProperty("/mode");
+
+      model.setProperty("/targetEnvironmentSelection", selectedKey);
+      model.setProperty("/targetEnvironment", environment);
+      model.setProperty("/selectedTargetPackageId", "");
+      model.setProperty("/targetArtifacts", []);
+      model.setProperty("/targetVisibleArtifacts", []);
+      model.setProperty("/selectedTargetArtifactKey", "");
+      model.setProperty("/targetArtifactsLoading", false);
+      model.setProperty("/targetPackages", []);
+      this._deploymentTargetPackages = [];
+      this._deploymentPackageRequests.target += 1;
+      this._deploymentArtifactRequests.target += 1;
+      this._clearDeploymentResults();
+
+      if (environment && mode === "ARTIFACT") {
+        await this._loadDeploymentRuntimeArtifacts(environment, "target");
+      } else if (environment) {
+        await this._loadDeploymentPackages(environment, "target");
+      }
+    },
+
+    _loadDeploymentPackages: async function (environment, side) {
+      const requestId = ++this._deploymentPackageRequests[side];
+      const model = this.getView().getModel("deploymentRuntime");
+      model.setProperty("/packageLoading", true);
+
+      try {
+        const response = await fetch(
+          `/api/deployment-runtime/packages?environment=${encodeURIComponent(environment)}`
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error?.message || "Unable to load packages.");
+        }
+
+        if (
+          requestId !== this._deploymentPackageRequests[side] ||
+          model.getProperty(`/${side}Environment`) !== environment
+        ) {
+          return;
+        }
+
+        const packages = Array.isArray(data.packages) ? data.packages : [];
+        if (side === "source") {
+          this._deploymentSourcePackages = packages;
+          this._applyDeploymentPackageFilter();
+        } else {
+          this._deploymentTargetPackages = packages;
+          model.setProperty("/targetPackages", packages);
+          this._updateDeploymentRuntimeSizeLimit();
+        }
+      } catch (error) {
+        if (requestId === this._deploymentPackageRequests[side]) {
+          MessageBox.error(`Unable to load ${environment} packages. ${error.message || ""}`);
+        }
+      } finally {
+        if (requestId === this._deploymentPackageRequests[side]) {
+          model.setProperty("/packageLoading", false);
+        }
+      }
+    },
+
+    async _loadDeploymentRuntimeArtifacts(environment, side) {
+      const requestId = ++this._deploymentArtifactRequests[side];
+      const model = this.getView().getModel("deploymentRuntime");
+      const loadingProperty = side === "source"
+        ? "/sourceArtifactsLoading"
+        : "/targetArtifactsLoading";
+      const artifactsProperty = side === "source"
+        ? "/sourceArtifacts"
+        : "/targetArtifacts";
+      const visibleProperty = side === "source"
+        ? "/sourceVisibleArtifacts"
+        : "/targetVisibleArtifacts";
+
+      model.setProperty(loadingProperty, true);
+
+      try {
+        const response = await fetch(
+          `/api/deployment-runtime/artifacts?environment=${encodeURIComponent(environment)}`
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error?.message || "Unable to load runtime artifacts.");
+        }
+
+        if (
+          requestId !== this._deploymentArtifactRequests[side] ||
+          model.getProperty(`/${side}Environment`) !== environment ||
+          model.getProperty("/mode") !== "ARTIFACT"
+        ) {
+          return;
+        }
+
+        const artifacts = (data.artifacts || []).map(function (artifact) {
+          return Object.assign({}, artifact, {
+            artifactKey: JSON.stringify([artifact.artifactType, artifact.artifactId]),
+            displayName: artifact.artifactName || artifact.artifactId
+          });
+        });
+        model.setProperty(artifactsProperty, artifacts);
+        this._syncDeploymentTargetArtifact(false);
+        this._refreshDeploymentArtifactTypes();
+        this._updateDeploymentRuntimeSizeLimit(artifacts.length);
+      } catch (error) {
+        if (requestId === this._deploymentArtifactRequests[side]) {
+          MessageBox.error(`Unable to load runtime artifacts for ${environment}. ${error.message || ""}`);
+        }
+      } finally {
+        if (requestId === this._deploymentArtifactRequests[side]) {
+          model.setProperty(loadingProperty, false);
+        }
+      }
+    },
+
+    onDeploymentArtifactSearch: function (event) {
+      const side = event.getSource().data("side");
+      const searchProperty = side === "source"
+        ? "/sourceArtifactSearch"
+        : "/targetArtifactSearch";
+      const searchText = event.getParameter("newValue") || event.getParameter("query") || "";
+      this.getView().getModel("deploymentRuntime").setProperty(searchProperty, searchText);
+      this._filterDeploymentRuntimeArtifacts(side, searchText);
+    },
+
+    _refreshDeploymentArtifactTypes: function () {
+      const model = this.getView().getModel("deploymentRuntime");
+      const types = new Set([
+        ...(model.getProperty("/sourceArtifacts") || []),
+        ...(model.getProperty("/targetArtifacts") || [])
+      ].map(function (artifact) {
+        return artifact.artifactType || "Unknown";
+      }));
+      model.setProperty("/artifactTypes", [
+        { key: "__ALL_TYPES__", text: "All Types", icon: "sap-icon://grid" },
+        ...Array.from(types).sort().map(function (type) {
+          return { key: type, text: type, icon: this._getDeploymentArtifactTypeIcon(type) };
+        }, this)
+      ]);
+      this._applyDeploymentArtifactFilters();
+    },
+
+    _getDeploymentArtifactTypeIcon: function (type) {
+      const normalizedType = String(type || "").toUpperCase().replace(/[\s-]+/g, "_");
+      const icons = {
+        INTEGRATION_FLOW: "sap-icon://process",
+        MESSAGE_MAPPING: "sap-icon://compare",
+        VALUE_MAPPING: "sap-icon://table-view",
+        SCRIPT_COLLECTION: "sap-icon://source-code",
+        FUNCTION_LIBRARY: "sap-icon://source-code",
+        FUNCTION_LIBRARIES: "sap-icon://source-code",
+        JDBC_DRIVER: "sap-icon://database",
+        REST_API_PROVIDER: "sap-icon://world",
+        SOAP_API_PROVIDER: "sap-icon://connected"
+      };
+      return icons[normalizedType] || "sap-icon://document";
+    },
+
+    onDeploymentArtifactTypeChange: function (event) {
+      const button = event.getSource();
+      this.getView().getModel("deploymentRuntime").setProperty(
+        "/selectedArtifactType",
+        button.getBindingContext("deploymentRuntime").getObject().key
+      );
+      button.setPressed(true);
+      this._applyDeploymentArtifactFilters();
+    },
+
+    _applyDeploymentArtifactFilters: function () {
+      const model = this.getView().getModel("deploymentRuntime");
+      this._filterDeploymentRuntimeArtifacts("source", model.getProperty("/sourceArtifactSearch"));
+      this._filterDeploymentRuntimeArtifacts("target", model.getProperty("/targetArtifactSearch"));
+    },
+
+    _filterDeploymentRuntimeArtifacts: function (side, searchText) {
+      const model = this.getView().getModel("deploymentRuntime");
+      const artifactsProperty = side === "source" ? "/sourceArtifacts" : "/targetArtifacts";
+      const visibleProperty = side === "source"
+        ? "/sourceVisibleArtifacts"
+        : "/targetVisibleArtifacts";
+      const query = String(searchText || "").trim().toLowerCase();
+      const selectedType = model.getProperty("/selectedArtifactType") || "__ALL_TYPES__";
+      const artifacts = (model.getProperty(artifactsProperty) || []).filter(function (artifact) {
+        const matchesType = selectedType === "__ALL_TYPES__" ||
+          (artifact.artifactType || "Unknown") === selectedType;
+        return matchesType && (!query || [
+          artifact.artifactId,
+          artifact.artifactName,
+          artifact.artifactType,
+          artifact.packageId,
+          artifact.runtimeVersion,
+          artifact.runtimeStatus
+        ].join(" ").toLowerCase().includes(query));
+      });
+
+      model.setProperty(visibleProperty, artifacts);
+      this._updateDeploymentRuntimeSizeLimit(artifacts.length);
+    },
+
+    onDeploymentRuntimeArtifactSelect: function (event) {
+      const side = event.getSource().data("side");
+      const artifact = event.getSource().getBindingContext("deploymentRuntime").getObject();
+      const property = side === "source"
+        ? "/selectedSourceArtifactKey"
+        : "/selectedTargetArtifactKey";
+      this.getView().getModel("deploymentRuntime").setProperty(property, artifact.artifactKey);
+      if (side === "source") {
+        this._syncDeploymentTargetArtifact(true);
+      }
+      this._clearDeploymentResults();
+    },
+
+    _syncDeploymentTargetArtifact: function (replaceSelection) {
+      const model = this.getView().getModel("deploymentRuntime");
+      if (!replaceSelection && model.getProperty("/selectedTargetArtifactKey")) {
+        return;
+      }
+
+      const sourceKey = model.getProperty("/selectedSourceArtifactKey");
+      const source = (model.getProperty("/sourceArtifacts") || []).find(function (artifact) {
+        return artifact.artifactKey === sourceKey;
+      });
+      const matches = source
+        ? (model.getProperty("/targetArtifacts") || []).filter(function (artifact) {
+            return artifact.artifactId === source.artifactId &&
+              artifact.artifactType === source.artifactType;
+          })
+        : [];
+
+      model.setProperty("/selectedTargetArtifactKey", matches.length === 1
+        ? matches[0].artifactKey
+        : "");
+    },
+
+    onDeploymentPackageSearch: function (event) {
+      const model = this.getView().getModel("deploymentRuntime");
+      model.setProperty(
+        "/packageSearch",
+        event.getParameter("newValue") || event.getParameter("query") || ""
+      );
+      this._applyDeploymentPackageFilter();
+    },
+
+    _applyDeploymentPackageFilter: function () {
+      const model = this.getView().getModel("deploymentRuntime");
+      const query = String(model.getProperty("/packageSearch") || "")
+        .trim()
+        .toLowerCase();
+      const packages = this._deploymentSourcePackages.filter(function (pkg) {
+        return !query || [pkg.packageId, pkg.packageName, pkg.description]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      });
+
+      this._updateDeploymentRuntimeSizeLimit(packages.length);
+      model.setProperty("/packages", packages);
+      model.setProperty("/selectedPackageCount", this._deploymentSourcePackages.filter(function (pkg) {
+        return pkg.selected;
+      }).length);
+      model.setProperty("/allPackagesSelected", this._deploymentSourcePackages.length > 0 &&
+        this._deploymentSourcePackages.every(function (pkg) { return pkg.selected; }));
+    },
+
+    onDeploymentPackageSelect: function (event) {
+      const selectedPackage = event.getSource()
+        .getBindingContext("deploymentRuntime")
+        .getObject();
+      const selected = event.getSource().getSelected();
+      const canonical = this._deploymentSourcePackages.find(function (pkg) {
+        return pkg.packageId === selectedPackage.packageId;
+      });
+
+      if (canonical) {
+        canonical.selected = selected;
+      }
+
+      this._applyDeploymentPackageFilter();
+      this._clearDeploymentResults();
+    },
+
+    onDeploymentSelectAllPackages: function (event) {
+      const selected = event.getSource().getSelected();
+      this._deploymentSourcePackages.forEach(function (pkg) {
+        pkg.selected = selected;
+      });
+      this._applyDeploymentPackageFilter();
+      this._clearDeploymentResults();
+    },
+
+    onDeploymentPairPackageChange: async function (event) {
+      const side = event.getSource().data("side");
+      const packageId = event.getSource().getSelectedKey();
+      const model = this.getView().getModel("deploymentRuntime");
+      const packageProperty = side === "source"
+        ? "/selectedSourcePackageId"
+        : "/selectedTargetPackageId";
+      const artifactsProperty = side === "source"
+        ? "/sourceArtifacts"
+        : "/targetArtifacts";
+      const selectedArtifactProperty = side === "source"
+        ? "/selectedSourceArtifactKey"
+        : "/selectedTargetArtifactKey";
+      const environment = model.getProperty(`/${side}Environment`);
+
+      model.setProperty(packageProperty, packageId);
+      model.setProperty(artifactsProperty, []);
+      model.setProperty(selectedArtifactProperty, "");
+      this._clearDeploymentResults();
+
+      if (!environment || !packageId) {
+        return;
+      }
+
+      await this._loadDeploymentArtifacts(environment, packageId, side);
+    },
+
+    async _loadDeploymentArtifacts(environment, packageId, side) {
+      const requestId = ++this._deploymentArtifactRequests[side];
+      const model = this.getView().getModel("deploymentRuntime");
+
+      try {
+        const response = await fetch(
+          `/api/deployment-runtime/package-artifacts?environment=${encodeURIComponent(environment)}` +
+          `&packageId=${encodeURIComponent(packageId)}`
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.error?.message || "Unable to load runtime artifacts.");
+        }
+
+        if (
+          requestId !== this._deploymentArtifactRequests[side] ||
+          model.getProperty(`/${side}Environment`) !== environment ||
+          model.getProperty(`/selected${side === "source" ? "Source" : "Target"}PackageId`) !== packageId
+        ) {
+          return;
+        }
+
+        const artifacts = (data.artifacts || []).map(function (artifact) {
+          return Object.assign({}, artifact, {
+            artifactKey: JSON.stringify([artifact.artifactType, artifact.artifactId]),
+            displayName: `${artifact.artifactName} (${artifact.artifactType})`
+          });
+        });
+        model.setProperty(side === "source" ? "/sourceArtifacts" : "/targetArtifacts", artifacts);
+        this._updateDeploymentRuntimeSizeLimit(artifacts.length);
+      } catch (error) {
+        if (requestId === this._deploymentArtifactRequests[side]) {
+          MessageBox.error(`Unable to load runtime artifacts. ${error.message || ""}`);
+        }
+      }
+    },
+
+    onDeploymentPairArtifactChange: function (event) {
+      const side = event.getSource().data("side");
+      const property = side === "source"
+        ? "/selectedSourceArtifactKey"
+        : "/selectedTargetArtifactKey";
+      this.getView().getModel("deploymentRuntime").setProperty(
+        property,
+        event.getSource().getSelectedKey()
+      );
+      this._clearDeploymentResults();
+    },
+
+    _clearDeploymentResults: function () {
+      const model = this.getView().getModel("deploymentRuntime");
+      this._deploymentCompareRequest += 1;
+      model.setProperty("/busy", false);
+      model.setProperty("/packageResults", []);
+      model.setProperty("/summary", {
+        packagesCompared: 0,
+        totalArtifacts: 0,
+        same: 0,
+        different: 0,
+        missingInSource: 0,
+        missingInTarget: 0,
+        notDeployed: 0,
+        errors: 0
+      });
+    },
+
+    _updateDeploymentRuntimeSizeLimit: function (visibleCount) {
+      const model = this.getView().getModel("deploymentRuntime");
+      model.setSizeLimit(Math.max(
+        100,
+        visibleCount || 0,
+        this._deploymentSourcePackages.length,
+        this._deploymentTargetPackages.length,
+        model.getProperty("/sourceArtifacts").length,
+        model.getProperty("/targetArtifacts").length
+      ));
+    },
+
+    onDeploymentRuntimeCompare: async function () {
+      const model = this.getView().getModel("deploymentRuntime");
+      const data = model.getData();
+
+      if (!data.sourceEnvironment || !data.targetEnvironment) {
+        MessageBox.warning("Select both source and target environments.");
+        return;
+      }
+      if (data.sourceEnvironment === data.targetEnvironment) {
+        MessageBox.warning("Source and target environments must be different.");
+        return;
+      }
+
+      const mode = data.mode || "PACKAGE";
+      let request;
+      if (mode === "ARTIFACT") {
+        const sourceArtifact = (data.sourceArtifacts || []).find(function (artifact) {
+          return artifact.artifactKey === data.selectedSourceArtifactKey;
+        });
+        const targetArtifact = (data.targetArtifacts || []).find(function (artifact) {
+          return artifact.artifactKey === data.selectedTargetArtifactKey;
+        });
+        if (!sourceArtifact || !targetArtifact) {
+          MessageBox.warning("Select one source and one target runtime artifact.");
+          return;
+        }
+        request = {
+          mode,
+          artifactPair: {
+            source: sourceArtifact,
+            target: targetArtifact
+          }
+        };
+      } else {
+        const selectedPackages = this._deploymentSourcePackages.filter(function (pkg) {
+          return pkg.selected;
+        });
+        if (selectedPackages.length === 0) {
+          MessageBox.warning("Select at least one source package to compare.");
+          return;
+        }
+        request = {
+          mode,
+          packageIds: selectedPackages.map(function (pkg) { return pkg.packageId; }),
+          packages: selectedPackages.reduce(function (packageMap, pkg) {
+            packageMap[pkg.packageId] = pkg;
+            return packageMap;
+          }, {})
+        };
+      }
+
+      const requestId = ++this._deploymentCompareRequest;
+      model.setProperty("/busy", true);
+      try {
+        const response = await fetch("/api/deployment-runtime/compare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign(request, {
+            sourceEnvironment: data.sourceEnvironment,
+            targetEnvironment: data.targetEnvironment
+          }))
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result?.error?.message || "Runtime comparison failed.");
+        }
+        if (requestId !== this._deploymentCompareRequest) {
+          return;
+        }
+        model.setProperty("/summary", result.summary || {});
+        model.setProperty("/packageResults", result.packageResults || []);
+        MessageToast.show("Deployment runtime comparison completed.");
+      } catch (error) {
+        if (requestId === this._deploymentCompareRequest) {
+          MessageBox.error(error.message || "Unable to compare deployment runtime versions.");
+        }
+      } finally {
+        if (requestId === this._deploymentCompareRequest) {
+          model.setProperty("/busy", false);
+        }
+      }
+    },
+
+    formatRuntimeComparisonText: function (status) {
+      const labels = {
+        SAME: "Same",
+        DIFFERENT: "Different",
+        MISSING_IN_SOURCE: "Missing in source",
+        MISSING_IN_TARGET: "Missing in target",
+        NOT_DEPLOYED: "Not deployed",
+        ERROR: "Error"
+      };
+      return labels[status] || status || "Unknown";
+    },
+
+    formatRuntimeComparisonState: function (status) {
+      const states = {
+        SAME: "Success",
+        DIFFERENT: "Warning",
+        MISSING_IN_SOURCE: "Error",
+        MISSING_IN_TARGET: "Error",
+        NOT_DEPLOYED: "Information",
+        ERROR: "Error"
+      };
+      return states[status] || "None";
     },
 
     _setActiveFeatureStep: function (featureKey) {
@@ -510,6 +1119,7 @@ sap.ui.define([
 
         packageObject.iflowsLoaded = true;
 
+        this._updateCatalogModelSizeLimit(model, model.getData().packages, "iflows");
         model.refresh(true);
 
         if (modelName === "target") {
@@ -605,6 +1215,7 @@ sap.ui.define([
 
         packageObject.valueMappingsLoaded = true;
 
+        this._updateCatalogModelSizeLimit(model, model.getData().packages, "valueMappings");
         model.refresh(true);
 
         if (modelName === "vmTarget") {
@@ -758,9 +1369,7 @@ sap.ui.define([
         this._vmSourceSearchText
       );
 
-      this.getView().getModel("vmSource").setData({
-        packages: filteredPackages
-      });
+      this._setCatalogModelData("vmSource", filteredPackages, "valueMappings");
     },
 
     _applyVmTargetFilter: function () {
@@ -769,9 +1378,25 @@ sap.ui.define([
         this._vmTargetSearchText
       );
 
-      this.getView().getModel("vmTarget").setData({
-        packages: filteredPackages
-      });
+      this._setCatalogModelData("vmTarget", filteredPackages, "valueMappings");
+    },
+
+    _setCatalogModelData: function (modelName, packages, childProperty) {
+      const packageList = packages || [];
+      const model = this.getView().getModel(modelName);
+
+      this._updateCatalogModelSizeLimit(model, packageList, childProperty);
+      model.setData({ packages: packageList });
+    },
+
+    _updateCatalogModelSizeLimit: function (model, packages, childProperty) {
+      const packageList = packages || [];
+      const largestChildList = packageList.reduce(function (largest, pkg) {
+        const children = pkg[childProperty];
+        return Math.max(largest, Array.isArray(children) ? children.length : 0);
+      }, 0);
+
+      model.setSizeLimit(Math.max(100, packageList.length, largestChildList));
     },
 
     _filterVmPackages: function (packages, searchText) {
@@ -823,9 +1448,7 @@ sap.ui.define([
         this._sourceSearchText
       );
 
-      this.getView().getModel("source").setData({
-        packages: filteredPackages
-      });
+      this._setCatalogModelData("source", filteredPackages, "iflows");
     },
 
     _applyTargetFilter: function () {
@@ -834,9 +1457,7 @@ sap.ui.define([
         this._targetSearchText
       );
 
-      this.getView().getModel("target").setData({
-        packages: filteredPackages
-      });
+      this._setCatalogModelData("target", filteredPackages, "iflows");
     },
 
     _filterPackages: function (packages, searchText) {
